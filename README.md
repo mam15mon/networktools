@@ -1,97 +1,207 @@
 <p align="center">
-    <img width="150" src="./public/logo.png" alt="logo">
+    <img width="150" src="./public/logo.png" alt="NetworkTools Logo">
 </p>
-<h1 align="center">NUXTOR</h1>
+<h1 align="center">NetworkTools</h1>
 <p align="center">
-A spiritual successor of <a href="https://github.com/NicolaSpadari/vitauri">ViTauri</a>, made with <a href="https://nuxt.com">Nuxt 4</a> and <a href="https://v2.tauri.app">Tauri 2</a>
+一个功能强大的网络工具集，基于 <a href="https://nuxt.com">Nuxt 4</a> 和 <a href="https://v2.tauri.app">Tauri 2</a> 构建
 <br>
-Build super fast desktop applications!
+专业的网络分析与管理工具！
 </p>
 
 <br />
 
 <p float="left">
-	<img src="https://img.shields.io/github/package-json/v/NicolaSpadari/nuxtor" />
-	<img src="https://img.shields.io/github/license/NicolaSpadari/nuxtor" />
+	<img src="https://img.shields.io/badge/version-1.5.0-blue" />
+	<img src="https://img.shields.io/badge/rust-1.70+-orange" />
+	<img src="https://img.shields.io/badge/nuxt-4.0-green" />
+	<img src="https://img.shields.io/badge/license-MIT-purple" />
 </p>
 
 <br />
 
-<div align="center">
-<img src="./public/screenshot.png">
-</div>
+## 🌟 主要功能
 
-<p align="center">Powered by Nuxt 4</p>
+### 📡 IPv4 工具
+- **子网计算器** - 快速计算IPv4子网信息
+- **地址汇总** - 批量汇总和优化IPv4地址段
+- **公网IP查询** - 获取当前公网IP地址
 
-Check more screenshots at [preview](https://github.com/NicolaSpadari/nuxtor/blob/main/preview.md)
+### 🌐 IPv6 工具
+- **IPv6子网计算** - 支持IPv6地址段分析
+- **地址格式验证** - IPv6地址格式检查
 
-<br />
+### 🌍 IP地理位置
+- **IP地理位置查询** - 精确的IP地址地理位置信息
+- **数据库信息** - 支持GeoIP数据库查询
+- **调试工具** - IP查询调试功能
 
-## Technologies run-down
+### 🔧 NAT工具
+- **NAT配置解析** - 网络地址转换配置分析
+- **规则验证** - NAT规则语法检查
 
-- Nuxt v4
-- Tauri v2
-- NuxtUI v4
-- TailwindCSS v4
-- Typescript
-- ESLint
-- Auto imports (for Tauri api too!)
+## 🛠️ 技术栈
 
-## Functionalities
+- **前端框架**: Nuxt v4 + NuxtUI v4
+- **样式框架**: TailwindCSS v4
+- **桌面应用**: Tauri v2
+- **编程语言**: TypeScript + Rust
+- **代码质量**: ESLint + Prettier
+- **自动化**: Tauri函数自动导入
 
-- Run shell commands from the app
-- Send custom notifications to the client (remember to turn on/grant notifications in your computer settings)
-- Display OS related informations
-- Store and retrieve data locally
-- Show tray icon
-- Support all Nuxt functionalities (routing/layout/middleware/modules/etc...)
+## 📋 系统要求
 
-## Setup
+### 运行环境
+- **操作系统**: Windows 10+, macOS 10.15+, Linux (Ubuntu 18.04+)
+- **Rust环境**: 1.70+ (参考 [Tauri prerequisites](https://tauri.app/start/prerequisites))
+- **包管理器**: bun (强制要求，如需更换请更新 `package.json` 和 `tauri.conf.json`)
 
-  - Before running this app, you need to configure your environment with Rust. Take a look at the [Tauri docs](https://tauri.app/start/prerequisites).
-  - This project enforces [bun](https://bun.sh). In order to use another package manager you need to update `package.json` and `tauri.conf.json`
-  - The frontend runs on the usual port `3000` of Nuxt, the Tauri server uses the port `3001`. This settings are customizable in the `nuxt.config.ts` and `tauri.conf.json`.
-  - Once ready, follow these commands:
+### 开发环境
+- **Node.js**: 18+
+- **内存**: 至少 4GB RAM
+- **存储**: 2GB 可用空间
 
-  ```sh
-  # use this template
-  $ npx degit NicolaSpadari/nuxtor my-nuxtor-app
+## 🚀 快速开始
 
-  # go into the folder
-  $ cd my-nuxtor-app
+### 1. 环境准备
+```bash
+# 安装 Rust (如果尚未安装)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-  # install dependencies
-  $ bun install
+# 安装 bun
+curl -fsSL https://bun.sh/install | bash
+```
 
-  # start the project
-  $ bun run tauri:dev
-  ```
+### 2. 项目设置
+```bash
+# 克隆项目
+git clone https://github.com/mam15mon/networktools.git
+cd networktools
 
-  This will run the Nuxt frontend and will launch the Tauri window.
+# 安装依赖
+bun install
 
-## Build
+# 启动开发服务器
+bun run tauri:dev
+```
 
-  ```sh
-  $ bun run tauri:build
-  ```
+这将启动 Nuxt 前端（端口 3000）并打开 Tauri 桌面应用。
 
-This command will generate the Nuxt static output and bundle the project under `src-tauri/target`.
+## 📦 构建部署
 
-## Debug
+### 生产构建
+```bash
+# 构建优化版本
+bun run tauri:build
+```
 
-  ```sh
-  $ bun run tauri:build:debug
-  ```
+### 调试构建
+```bash
+# 构建调试版本（包含开发者工具）
+bun run tauri:build:debug
+```
 
-The same Tauri bundle will generate under `src-tauri/target`, but with the ability to open the console.
+构建产物将生成在 `src-tauri/target` 目录中。
 
-## Notes
+## 🔧 配置说明
 
-- Tauri v2 brings some big refactors, such as packages names and permission management. New permissions have to be granted under `src-tauri/capabilities/main.json`
-- Tauri functions are auto imported with the help of a custom module, named like `useTauri<LibraryName>`. If another Tauri plugin is added, then the module has to be updated to support its functions under `app/modules/tauri.ts`
-- As per [documentation](https://tauri.app/start/frontend/nuxt/#checklist), Nuxt SSR must be disabled in order for Tauri to act as the backend. Still, all Nuxt goodies will be functional.
-- NuxtUI is a very powerful UI library that consolidates design over the entire application. While version 4 is still in alpha, it includes old pro components of the v3.
+### 端口配置
+- **前端端口**: 3000 (可在 `nuxt.config.ts` 中修改)
+- **Tauri端口**: 3001 (可在 `tauri.conf.json` 中修改)
 
-## License
+### 权限配置
+Tauri v2 需要在 `src-tauri/capabilities/main.json` 中配置权限：
+- 文件系统访问
+- 网络请求
+- 系统通知
+- 操作系统信息
 
-MIT License © 2024-PRESENT [NicolaSpadari](https://github.com/NicolaSpadari)
+### Tauri插件
+项目集成了以下 Tauri 插件：
+- `tauri-plugin-shell` - Shell命令执行
+- `tauri-plugin-notification` - 系统通知
+- `tauri-plugin-os` - 操作系统信息
+- `tauri-plugin-fs` - 文件系统操作
+- `tauri-plugin-store` - 本地数据存储
+- `tauri-plugin-dialog` - 对话框
+
+## 📁 项目结构
+
+```
+networktools/
+├── app/                    # Nuxt 前端代码
+│   ├── components/        # Vue 组件
+│   ├── layouts/           # 布局文件
+│   ├── pages/             # 页面路由
+│   └── app.vue           # 根组件
+├── src-tauri/             # Tauri 后端代码
+│   ├── src/              # Rust 源码
+│   │   ├── ipv4_subnet.rs
+│   │   ├── ipv6_subnet.rs
+│   │   ├── ipv4_summary.rs
+│   │   ├── ip_location.rs
+│   │   ├── nat_parser.rs
+│   │   └── lib.rs
+│   ├── Cargo.toml        # Rust 依赖配置
+│   └── tauri.conf.json   # Tauri 应用配置
+├── package.json          # Node.js 依赖配置
+├── nuxt.config.ts        # Nuxt 框架配置
+└── README.md            # 项目文档
+```
+
+## 🧪 开发指南
+
+### 添加新的网络工具
+1. 在 `src-tauri/src/` 中创建新的 Rust 模块
+2. 在 `lib.rs` 中注册 Tauri 命令
+3. 在前端 `app/` 中创建对应的 UI 组件
+4. 更新 `app/modules/tauri.ts` 以支持新的 Tauri 函数自动导入
+
+### 代码规范
+- 遵循 Rust 官方代码风格
+- TypeScript 严格模式
+- ESLint + Prettier 自动格式化
+- 提交前必须通过 linting 检查
+
+## 🐛 故障排除
+
+### 常见问题
+
+**Q: 构建失败提示 Rust 版本过低**
+A: 请运行 `rustup update` 更新 Rust 到最新版本
+
+**Q: 前端热重载不工作**
+A: 检查端口 3000 是否被占用，或修改 `nuxt.config.ts` 中的端口配置
+
+**Q: Tauri 窗口无法打开**
+A: 确保系统已安装必要的图形库依赖，参考 Tauri 官方文档
+
+**Q: IP地理位置查询不准确**
+A: 需要更新 GeoIP 数据库，或检查网络连接
+
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本仓库
+2. 创建特性分支: `git checkout -b feature/amazing-feature`
+3. 提交更改: `git commit -m 'Add amazing feature'`
+4. 推送分支: `git push origin feature/amazing-feature`
+5. 提交 Pull Request
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## 🙏 致谢
+
+- [Nuxt](https://nuxt.com) - 强大的 Vue.js 框架
+- [Tauri](https://tauri.app) - 轻量级桌面应用框架
+- [NuxtUI](https://ui.nuxt.com) - 优雅的 UI 组件库
+- [TailwindCSS](https://tailwindcss.com) - 实用优先的 CSS 框架
+
+
+---
+
+<p align="center">
+  Made with ❤️ by mam15mon
+</p>

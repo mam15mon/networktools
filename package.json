@@ -41,6 +41,7 @@
 		"@antfu/eslint-config": "^5.4.1",
 		"@nuxt/eslint": "^1.9.0",
 		"@tauri-apps/cli": "^2.8.4",
+		"@tauri-apps/plugin-opener": "^2.5.2",
 		"@types/file-saver": "^2.0.7",
 		"@vueuse/core": "^13.9.0",
 		"@vueuse/nuxt": "^13.9.0",

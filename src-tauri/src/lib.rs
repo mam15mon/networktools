@@ -39,6 +39,7 @@ pub fn run() {
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_store::Builder::new().build())
 		.plugin(tauri_plugin_dialog::init())
+		.plugin(tauri_plugin_opener::init())
 		.invoke_handler(tauri::generate_handler![
 			ipv4_subnet::get_public_ip,
 			ipv4_subnet::compute_subnet,

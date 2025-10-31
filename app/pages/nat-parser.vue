@@ -12,12 +12,12 @@
 							<h3 class="text-lg font-semibold">设备类型</h3>
 						</div>
 					</template>
-					<URadioGroup
-						v-model="deviceType"
-						:options="deviceOptions"
-						class="flex gap-6"
-					/>
-				</UCard>
+				<URadioGroup
+					v-model="deviceType"
+					:items="deviceOptions"
+					class="flex gap-6"
+				/>
+			</UCard>
 
 			<!-- 配置输入 -->
 			<UCard class="bg-(--ui-bg)">
@@ -225,14 +225,15 @@
 		{ label: "华为防火墙", value: "huawei" },
 		{ label: "H3C 防火墙", value: "h3c" }
 	] as const;
-	type DeviceType = (typeof deviceOptions)[number]["value"];
-	const deviceType = ref<DeviceType>(deviceOptions[0].value);
-	const configText = ref("");
-	const parseResult = ref<NatParseResult>({
-		successEntries: [],
-		failedEntries: [],
-		deviceType: "huawei"
-	});
+type DeviceType = (typeof deviceOptions)[number]["value"];
+const deviceType = ref<DeviceType>(deviceOptions[0].value);
+const configText = ref("");
+const parseResult = ref<NatParseResult>({
+	successEntries: [],
+	failedEntries: [],
+	deviceType: "huawei"
+});
+const toast = useToast();
 
 	const totalEntries = computed(() =>
 		parseResult.value.successEntries.length + parseResult.value.failedEntries.length
@@ -291,9 +292,16 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 		parseConfig();
 	};
 
-	const isTauriEnvironment = () =>
-		typeof window !== "undefined" &&
-		(Boolean((window as any).__TAURI__) || Boolean((window as any).__TAURI_IPC__));
+	const isTauriEnvironment = () => {
+		if (typeof window === "undefined") return false;
+		const tauriGlobal = (window as any).__TAURI__;
+		const tauriInternal = (window as any).__TAURI_INTERNALS__;
+		if (tauriGlobal || tauriInternal) {
+			return true;
+		}
+		const ua = typeof navigator !== "undefined" ? navigator.userAgent?.toLowerCase?.() ?? "" : "";
+		return ua.includes("tauri");
+	};
 
 	// 处理导出点击事件
 	const handleExportClick = () => {
@@ -306,6 +314,11 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 		console.log("导出功能被触发");
 		if (parseResult.value.successEntries.length === 0) {
 			console.log("没有成功条目，导出终止");
+			toast.add({
+				title: "暂无可导出的数据",
+				description: "请先粘贴并解析 NAT 配置。",
+				icon: "i-lucide-info"
+			});
 			return;
 		}
 
@@ -378,7 +391,12 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 
 		} catch (error) {
 			console.error("生成 Excel 文件失败:", error);
-			alert(`生成 Excel 文件失败：${error}`);
+			toast.add({
+				title: "导出失败",
+				description: "生成 Excel 文件时出现问题，请重试。",
+				color: "red",
+				icon: "i-lucide-alert-triangle"
+			});
 		}
 	};
 
@@ -388,43 +406,60 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 		console.log("是否在 Tauri 环境:", isTauriEnvironment());
 
 		if (isTauriEnvironment()) {
-			console.log("使用 Tauri 文件保存对话框");
 			try {
-				const { save, open } = await import("@tauri-apps/plugin-dialog");
-				console.log("成功导入 Tauri 对话框 API");
+				const { writeFile } = await import("@tauri-apps/plugin-fs");
+				const { downloadDir, join } = await import("@tauri-apps/api/path");
 
-				// 打开保存文件对话框
-				const filePath = await save({
-					filters: [
+				const downloadsPath = await downloadDir();
+				const fullPath = await join(downloadsPath, fileName);
+				const arrayBuffer = await blob.arrayBuffer();
+				await writeFile(fullPath, new Uint8Array(arrayBuffer));
+				console.log("文件保存成功到下载目录:", fullPath);
+
+				toast.add({
+					title: "导出成功",
+					description: `文件已保存至: ${fullPath}`,
+					icon: "i-lucide-check-circle",
+					timeout: 8000,
+					actions: [
 						{
-							name: "Excel 文件",
-							extensions: ["xlsx", "csv"]
-						},
-						{
-							name: "CSV 文件",
-							extensions: ["csv"]
+							label: "打开位置",
+							click: async () => {
+								try {
+									const { Command } = await import("@tauri-apps/plugin-shell");
+									const platform = navigator.platform.toLowerCase();
+									if (platform.includes("win")) {
+										const windowsPath = fullPath.replace(/\//g, "\\");
+										const command = new Command("open-explorer", [`/select,"${windowsPath}"`]);
+										await command.execute();
+									} else if (platform.includes("mac")) {
+										const command = new Command("open-folder", ["-R", fullPath]);
+										await command.execute();
+									} else {
+										const command = new Command("exec-sh", [`xdg-open "${downloadsPath}"`]);
+										await command.execute();
+									}
+								} catch (openError) {
+									console.error("打开文件位置失败:", openError);
+									toast.add({
+										title: "无法打开文件位置",
+										description: `请手动前往: ${downloadsPath}`,
+										icon: "i-lucide-alert-triangle",
+										timeout: 10000
+									});
+								}
+							}
 						}
-					],
-					defaultPath: fileName
+					]
 				});
-
-				if (filePath) {
-					console.log("用户选择保存路径:", filePath);
-					const { writeFile } = await import("@tauri-apps/plugin-fs");
-
-					// 将 Blob 转换为 Uint8Array
-					const arrayBuffer = await blob.arrayBuffer();
-					const uint8Array = new Uint8Array(arrayBuffer);
-
-					await writeFile(filePath, uint8Array);
-					console.log("文件保存成功");
-					alert(`Excel 文件保存成功！\n路径：${filePath}`);
-				} else {
-					console.log("用户取消了保存");
-				}
 			} catch (error) {
-				console.error("保存文件失败:", error);
-				alert(`保存失败：${error}`);
+				console.error("Tauri保存失败:", error);
+				toast.add({
+					title: "导出失败",
+					description: "保存文件时发生错误，请重试。",
+					color: "red",
+					icon: "i-lucide-alert-triangle"
+				});
 			}
 		} else {
 			console.log("使用浏览器下载 API");
@@ -444,11 +479,37 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 
 				console.log("Excel 文件下载触发");
 
-				// 显示成功提示
-				alert(`Excel 文件导出成功！\n文件名：${fileName}\n请检查浏览器的下载文件夹。`);
+				toast.add({
+					title: "导出成功",
+					description: `文件已下载: ${fileName}`,
+					icon: "i-lucide-check-circle",
+					timeout: 8000,
+					actions: [{
+						label: "复制路径",
+						click: async () => {
+							try {
+								// 在浏览器环境下，复制文件名到剪贴板
+								await navigator.clipboard.writeText(fileName);
+								// 显示一个简单的提示
+								toast.add({
+									title: "文件名已复制",
+									description: "请在下载目录中查找此文件",
+									timeout: 3000
+								});
+							} catch (copyError) {
+								console.log("无法复制文件名");
+							}
+						}
+					}]
+				});
 			} catch (error) {
 				console.error("浏览器下载失败:", error);
-				alert(`导出失败：${error}`);
+				toast.add({
+					title: "导出失败",
+					description: "浏览器下载失败，请重试。",
+					color: "red",
+					icon: "i-lucide-alert-triangle"
+				});
 			}
 		}
 	};
