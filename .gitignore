@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+*.log*
+
+# Build outputs
+.nuxt
+.nitro
+.cache
+.output
+dist
+src-tauri/target
+.cargo
+
+# Environment files
+.env
+.env.*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# Temporary files
+.data
+*.tmp
+*.temp
+
+# Package manager lock files (keep bun.lock, ignore others)
+package-lock.json
+yarn.lock
+
+# Spec workflow files
+.spec-workflow/
