@@ -100,26 +100,32 @@ fn biguint_to_ipv6(value: &BigUint) -> Ipv6Addr {
 }
 
 fn format_biguint(value: &BigUint) -> String {
-	let mut result = String::new();
-	let digits = value.to_str_radix(10);
-	let chars: Vec<char> = digits.chars().collect();
-	let mut count = 0;
-	for ch in chars.iter().rev() {
-		if count == 3 {
-			result.push(',');
-			count = 0;
-		}
-		result.push(*ch);
-		count += 1;
-	}
-	result.chars().rev().collect()
+    let mut result = String::new();
+    let digits = value.to_str_radix(10);
+    let chars: Vec<char> = digits.chars().collect();
+    let mut count = 0;
+    for ch in chars.iter().rev() {
+        if count == 3 {
+            result.push(',');
+            count = 0;
+        }
+        result.push(*ch);
+        count += 1;
+    }
+    result.chars().rev().collect()
 }
 
 fn format_full_ipv6(addr: &Ipv6Addr) -> String {
     let segments = addr.segments();
     format!(
         "{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}",
-        segments[0], segments[1], segments[2], segments[3],
-        segments[4], segments[5], segments[6], segments[7]
+        segments[0],
+        segments[1],
+        segments[2],
+        segments[3],
+        segments[4],
+        segments[5],
+        segments[6],
+        segments[7]
     )
 }

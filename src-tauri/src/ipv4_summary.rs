@@ -62,7 +62,8 @@ pub fn aggregate_ipv4(items: Vec<String>) -> Result<Ipv4AggregateResult, String>
         precise_summary.extend(range_to_cidrs(range.start, range.end));
     }
 
-    let approximate_summary = minimal_supernet(merged.first().unwrap().start, merged.last().unwrap().end);
+    let approximate_summary =
+        minimal_supernet(merged.first().unwrap().start, merged.last().unwrap().end);
     let non_precise_summary = calculate_non_precise_summary(&merged);
 
     Ok(Ipv4AggregateResult {
@@ -156,7 +157,13 @@ fn parse_single(entry: &str) -> Result<(Range, String), String> {
         .parse()
         .map_err(|_| "无效的 IPv4 地址".to_string())?;
     let value = ipv4_to_u32(ip);
-    Ok((Range { start: value, end: value }, ip.to_string()))
+    Ok((
+        Range {
+            start: value,
+            end: value,
+        },
+        ip.to_string(),
+    ))
 }
 
 fn merge_ranges(ranges: Vec<Range>) -> Vec<Range> {
@@ -188,7 +195,11 @@ fn range_to_cidrs(start: u32, end: u32) -> Vec<String> {
     while current <= end64 {
         let cur_u32 = current as u32;
         let max_trailing = cur_u32.trailing_zeros();
-        let mut prefix = if max_trailing == 32 { 0 } else { 32 - max_trailing };
+        let mut prefix = if max_trailing == 32 {
+            0
+        } else {
+            32 - max_trailing
+        };
         let mut block_size = block_size_for_prefix(prefix);
 
         while current + block_size - 1 > end64 {
@@ -255,9 +266,7 @@ fn calculate_non_precise_summary(merged_ranges: &[Range]) -> NonPreciseSummary {
     // 计算输入地址的实际数量
     let mut input_addresses = 0u128;
     for range in merged_ranges {
-        let size = (range.end as u128)
-            .saturating_sub(range.start as u128)
-            + 1;
+        let size = (range.end as u128).saturating_sub(range.start as u128) + 1;
         input_addresses += size;
     }
 
@@ -267,12 +276,11 @@ fn calculate_non_precise_summary(merged_ranges: &[Range]) -> NonPreciseSummary {
     } else {
         total_addresses - input_addresses
     };
-    let extra_percentage =
-        if total_addresses > 0 {
-            (extra_addresses as f64 / total_addresses as f64) * 100.0
-        } else {
-            0.0
-        };
+    let extra_percentage = if total_addresses > 0 {
+        (extra_addresses as f64 / total_addresses as f64) * 100.0
+    } else {
+        0.0
+    };
 
     NonPreciseSummary {
         cidr,

@@ -7,9 +7,9 @@ export const usePublicIp = () => {
 	// 获取公网 IP
 	const fetchPublicIp = async () => {
 		// 如果最近 5 分钟内获取过，直接返回缓存
-		if (lastFetched.value &&
-			Date.now() - lastFetched.value.getTime() < 5 * 60 * 1000 &&
-			publicIp.value) {
+		if (lastFetched.value
+			&& Date.now() - lastFetched.value.getTime() < 5 * 60 * 1000
+			&& publicIp.value) {
 			return publicIp.value;
 		}
 

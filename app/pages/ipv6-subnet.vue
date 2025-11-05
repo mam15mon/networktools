@@ -47,7 +47,8 @@
 </template>
 
 <script lang="ts" setup>
-import LayoutTile from "~/components/Layout/Tile.vue";
+	import LayoutTile from "~/components/Layout/Tile.vue";
+
 	definePageMeta({
 		name: "IPv6 子网计算器",
 		icon: "lucide:network",
@@ -55,12 +56,12 @@ import LayoutTile from "~/components/Layout/Tile.vue";
 		category: "tools"
 	});
 
-	type SummaryRow = {
+	interface SummaryRow {
 		label: string
 		value: string
-	};
+	}
 
-	type Ipv6Result = {
+	interface Ipv6Result {
 		ipv6Address: string
 		fullIpv6Address: string
 		totalIpAddresses: string
@@ -68,7 +69,7 @@ import LayoutTile from "~/components/Layout/Tile.vue";
 		networkAddressFull: string
 		ipRange: string
 		addresses: string[]
-	};
+	}
 
 	const schema = z.object({
 		cidrInput: z.string({
@@ -194,11 +195,11 @@ import LayoutTile from "~/components/Layout/Tile.vue";
 
 	function isValidIpv6(value: string) {
 		const trimmed = value.trim();
-		if (!/^[0-9a-fA-F:]+$/.test(trimmed)) return false;
+		if (!/^[0-9a-f:]+$/i.test(trimmed)) return false;
 		if (trimmed.includes("::")) {
 			if (trimmed.indexOf("::") !== trimmed.lastIndexOf("::")) return false;
 		}
-		const parts = trimmed.split(":").filter(part => part.length > 0);
+		const parts = trimmed.split(":").filter((part) => part.length > 0);
 		return parts.length <= 8;
 	}
 </script>

@@ -34,3 +34,6 @@ yarn.lock
 
 # Spec workflow files
 .spec-workflow/
+
+# Old Python directory
+old_python/

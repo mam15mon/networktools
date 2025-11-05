@@ -46,14 +46,13 @@ pub async fn get_public_ip() -> Result<String, String> {
     // 使用多个公网 IP 服务作为备选，优先使用国内服务
     let services = vec![
         // 优先使用 ipip.net
-        "https://myip.ipip.net/",            // ipip.net - 专业 IP 服务
-
+        "https://myip.ipip.net/", // ipip.net - 专业 IP 服务
         // 备用纯文本服务
-        "https://api.ip.sb/ip",              // IP.SB - 返回纯文本 IP
-        "https://api.ipify.org",             // ipify - 全球最大，返回纯文本
-        "https://icanhazip.com",             // icanhazip - 返回纯文本
-        "https://ipecho.net/plain",          // ipecho - 返回纯文本
-        "https://checkip.amazonaws.com",     // AWS - 返回纯文本
+        "https://api.ip.sb/ip",          // IP.SB - 返回纯文本 IP
+        "https://api.ipify.org",         // ipify - 全球最大，返回纯文本
+        "https://icanhazip.com",         // icanhazip - 返回纯文本
+        "https://ipecho.net/plain",      // ipecho - 返回纯文本
+        "https://checkip.amazonaws.com", // AWS - 返回纯文本
     ];
 
     for service in services {
@@ -132,16 +131,16 @@ pub fn compute_subnet(input: &str) -> Result<SubnetComputation, String> {
     }
 
     let ip_int = u32::from(ip_addr);
-    let mask = if cidr == 0 { 0 } else { u32::MAX << (32 - cidr) };
+    let mask = if cidr == 0 {
+        0
+    } else {
+        u32::MAX << (32 - cidr)
+    };
     let wildcard = !mask;
     let network = ip_int & mask;
     let broadcast = network | wildcard;
 
-    let total_hosts_value: u128 = if cidr >= 32 {
-        1
-    } else {
-        1u128 << (32 - cidr)
-    };
+    let total_hosts_value: u128 = if cidr >= 32 { 1 } else { 1u128 << (32 - cidr) };
 
     let (usable_hosts_value, first_usable, last_usable) = match cidr {
         32 => (1u128, network, network),
@@ -159,11 +158,7 @@ pub fn compute_subnet(input: &str) -> Result<SubnetComputation, String> {
     let usable_range = if cidr == 32 {
         format_ip(first_usable)
     } else {
-        format!(
-            "{} - {}",
-            format_ip(first_usable),
-            format_ip(last_usable)
-        )
+        format!("{} - {}", format_ip(first_usable), format_ip(last_usable))
     };
 
     let ip_class = derive_class(ip_int);
@@ -217,11 +212,7 @@ fn build_related_networks(ip_int: u32, cidr: u32, ip_class: &str) -> Vec<Network
     let base_network = ip_int & class_mask;
 
     let diff = cidr - class_boundary;
-    let networks_count = if diff >= 32 {
-        u32::MAX
-    } else {
-        1u32 << diff
-    };
+    let networks_count = if diff >= 32 { u32::MAX } else { 1u32 << diff };
 
     let step = if cidr == 32 { 1 } else { 1u32 << (32 - cidr) };
 
@@ -244,11 +235,7 @@ fn build_related_networks(ip_int: u32, cidr: u32, ip_class: &str) -> Vec<Network
                 range: if cidr == 32 {
                     format_ip(first_host)
                 } else {
-                    format!(
-                        "{} - {}",
-                        format_ip(first_host),
-                        format_ip(last_host)
-                    )
+                    format!("{} - {}", format_ip(first_host), format_ip(last_host))
                 },
                 broadcast: format_ip(broadcast_int),
             }
@@ -334,9 +321,17 @@ fn build_in_addr_arpa(ip_addr: Ipv4Addr) -> String {
 }
 
 fn build_ipv4_mapped(ip_int: u32) -> String {
-    format!("::ffff:{:04x}.{:04x}", (ip_int >> 16) & 0xffff, ip_int & 0xffff)
+    format!(
+        "::ffff:{:04x}.{:04x}",
+        (ip_int >> 16) & 0xffff,
+        ip_int & 0xffff
+    )
 }
 
 fn build_six_to_four_prefix(ip_int: u32) -> String {
-    format!("2002:{:04x}:{:04x}::/48", (ip_int >> 16) & 0xffff, ip_int & 0xffff)
+    format!(
+        "2002:{:04x}:{:04x}::/48",
+        (ip_int >> 16) & 0xffff,
+        ip_int & 0xffff
+    )
 }

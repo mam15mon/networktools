@@ -108,8 +108,7 @@ impl NATParser {
                         idx += 2;
 
                         if idx < tokens.len() && !is_huawei_keyword(tokens[idx]) {
-                            let first_port =
-                                restore_token(tokens[idx], &quoted_names);
+                            let first_port = restore_token(tokens[idx], &quoted_names);
                             idx += 1;
 
                             let second_port = if idx < tokens.len()
@@ -139,8 +138,7 @@ impl NATParser {
                         idx += 2;
 
                         if idx < tokens.len() && !is_huawei_keyword(tokens[idx]) {
-                            let first_port =
-                                restore_token(tokens[idx], &quoted_names);
+                            let first_port = restore_token(tokens[idx], &quoted_names);
                             idx += 1;
 
                             let second_port = if idx < tokens.len()
@@ -215,7 +213,8 @@ impl NATParser {
     }
 
     fn parse_h3c_command(command: &str) -> Option<NatEntry> {
-        let protocol = capture_token(h3c_protocol_re(), command).unwrap_or_else(|| "any".to_string());
+        let protocol =
+            capture_token(h3c_protocol_re(), command).unwrap_or_else(|| "any".to_string());
         let global_ip = capture_token(h3c_global_re(), command)?;
         let inside_ip = capture_token(h3c_inside_re(), command)?;
         let rule = capture_token(h3c_rule_re(), command).unwrap_or_else(|| "-".to_string());
@@ -263,10 +262,7 @@ fn preprocess_command(command: &str) -> (String, Vec<String>) {
     let mut processed = command.to_string();
     let mut quoted_values = Vec::new();
 
-    for (index, caps) in quoted_value_re()
-        .captures_iter(command)
-        .enumerate()
-    {
+    for (index, caps) in quoted_value_re().captures_iter(command).enumerate() {
         let quoted = caps[1].to_string();
         quoted_values.push(quoted.clone());
         let placeholder = format!("QUOTED_NAME_{}", index);
@@ -326,9 +322,7 @@ fn h3c_vrrp_re() -> &'static Regex {
 
 fn h3c_description_re() -> &'static Regex {
     static REGEX: OnceLock<Regex> = OnceLock::new();
-    REGEX.get_or_init(|| {
-        Regex::new(r"description\s+(.+?)(?:\s+counting|\s+reversible|$)").unwrap()
-    })
+    REGEX.get_or_init(|| Regex::new(r"description\s+(.+?)(?:\s+counting|\s+reversible|$)").unwrap())
 }
 
 fn h3c_double_port_re() -> &'static Regex {
@@ -340,9 +334,7 @@ fn h3c_double_port_re() -> &'static Regex {
 
 fn h3c_single_port_re() -> &'static Regex {
     static REGEX: OnceLock<Regex> = OnceLock::new();
-    REGEX.get_or_init(|| {
-        Regex::new(r"global\s+\S+\s+(\d+)\s+inside\s+\S+\s+(\d+)").unwrap()
-    })
+    REGEX.get_or_init(|| Regex::new(r"global\s+\S+\s+(\d+)\s+inside\s+\S+\s+(\d+)").unwrap())
 }
 
 fn is_huawei_keyword(token: &str) -> bool {

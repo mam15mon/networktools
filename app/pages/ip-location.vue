@@ -42,25 +42,43 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-globe" class="size-5" />
-						<h3 class="text-lg font-semibold">API 状态</h3>
+						<h3 class="text-lg font-semibold">
+							API 状态
+						</h3>
 					</div>
 				</template>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="space-y-2">
-						<p class="text-sm font-medium text-(--ui-text-muted)">API 端点</p>
-						<p class="text-base text-sm truncate">{{ databaseInfo.apiEndpoint }}</p>
+						<p class="text-sm font-medium text-(--ui-text-muted)">
+							API 端点
+						</p>
+						<p class="text-base text-sm truncate">
+							{{ databaseInfo.apiEndpoint }}
+						</p>
 					</div>
 					<div class="space-y-2">
-						<p class="text-sm font-medium text-(--ui-text-muted)">IPv4 支持</p>
-						<p class="text-base">{{ databaseInfo.supportsIpv4 ? '✅ 支持' : '❌ 不支持' }}</p>
+						<p class="text-sm font-medium text-(--ui-text-muted)">
+							IPv4 支持
+						</p>
+						<p class="text-base">
+							{{ databaseInfo.supportsIpv4 ? '✅ 支持' : '❌ 不支持' }}
+						</p>
 					</div>
 					<div class="space-y-2">
-						<p class="text-sm font-medium text-(--ui-text-muted)">IPv6 支持</p>
-						<p class="text-base">{{ databaseInfo.supportsIpv6 ? '✅ 支持' : '❌ 不支持' }}</p>
+						<p class="text-sm font-medium text-(--ui-text-muted)">
+							IPv6 支持
+						</p>
+						<p class="text-base">
+							{{ databaseInfo.supportsIpv6 ? '✅ 支持' : '❌ 不支持' }}
+						</p>
 					</div>
 					<div class="space-y-2">
-						<p class="text-sm font-medium text-(--ui-text-muted)">数据来源</p>
-						<p class="text-base">在线 API</p>
+						<p class="text-sm font-medium text-(--ui-text-muted)">
+							数据来源
+						</p>
+						<p class="text-base">
+							在线 API
+						</p>
 					</div>
 				</div>
 			</UCard>
@@ -68,24 +86,36 @@
 			<!-- 查询结果 -->
 			<div v-if="locationResult" class="space-y-8">
 				<section class="space-y-4">
-					<h3 class="text-xl font-semibold">查询结果</h3>
+					<h3 class="text-xl font-semibold">
+						查询结果
+					</h3>
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<!-- IP 地址信息 -->
 						<UCard class="bg-(--ui-bg)">
 							<template #header>
 								<div class="flex items-center gap-2">
 									<Icon name="i-lucide-globe" class="size-5" />
-									<h4 class="text-lg font-semibold">IP 地址信息</h4>
+									<h4 class="text-lg font-semibold">
+										IP 地址信息
+									</h4>
 								</div>
 							</template>
 							<div class="space-y-4">
 								<div class="space-y-2">
-									<p class="text-sm font-medium text-(--ui-text-muted)">查询地址</p>
-									<p class="text-base font-mono">{{ locationResult.ip }}</p>
+									<p class="text-sm font-medium text-(--ui-text-muted)">
+										查询地址
+									</p>
+									<p class="text-base font-mono">
+										{{ locationResult.ip }}
+									</p>
 								</div>
 								<div class="space-y-2">
-									<p class="text-sm font-medium text-(--ui-text-muted)">地址类型</p>
-									<p class="text-base">{{ locationResult.isIpv4 ? 'IPv4' : 'IPv6' }}</p>
+									<p class="text-sm font-medium text-(--ui-text-muted)">
+										地址类型
+									</p>
+									<p class="text-base">
+										{{ locationResult.isIpv4 ? 'IPv4' : 'IPv6' }}
+									</p>
 								</div>
 							</div>
 						</UCard>
@@ -95,32 +125,49 @@
 							<template #header>
 								<div class="flex items-center gap-2">
 									<Icon name="i-lucide-map-pin" class="size-5" />
-									<h4 class="text-lg font-semibold">地理位置</h4>
+									<h4 class="text-lg font-semibold">
+										地理位置
+									</h4>
 								</div>
 							</template>
 							<div class="space-y-4">
 								<div class="space-y-2">
-									<p class="text-sm font-medium text-(--ui-text-muted)">国家</p>
-									<p class="text-base">{{ locationResult.location.country }}</p>
+									<p class="text-sm font-medium text-(--ui-text-muted)">
+										国家
+									</p>
+									<p class="text-base">
+										{{ locationResult.location.country }}
+									</p>
 								</div>
 								<div class="space-y-2">
-									<p class="text-sm font-medium text-(--ui-text-muted)">省份/地区</p>
-									<p class="text-base">{{ locationResult.location.region }}</p>
+									<p class="text-sm font-medium text-(--ui-text-muted)">
+										省份/地区
+									</p>
+									<p class="text-base">
+										{{ locationResult.location.region }}
+									</p>
 								</div>
 								<div class="space-y-2">
-									<p class="text-sm font-medium text-(--ui-text-muted)">城市</p>
-									<p class="text-base">{{ locationResult.location.city }}</p>
+									<p class="text-sm font-medium text-(--ui-text-muted)">
+										城市
+									</p>
+									<p class="text-base">
+										{{ locationResult.location.city }}
+									</p>
 								</div>
 								<div class="space-y-2">
-									<p class="text-sm font-medium text-(--ui-text-muted)">运营商</p>
-									<p class="text-base">{{ locationResult.location.isp }}</p>
+									<p class="text-sm font-medium text-(--ui-text-muted)">
+										运营商
+									</p>
+									<p class="text-base">
+										{{ locationResult.location.isp }}
+									</p>
 								</div>
 							</div>
 						</UCard>
 					</div>
 				</section>
 
-				
 				<!-- 数据来源说明 -->
 				<div class="flex items-center gap-2 text-sm text-(--ui-text-muted)">
 					<Icon name="i-lucide-info" class="size-4" />
@@ -133,29 +180,43 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-help-circle" class="size-5" />
-						<h3 class="text-lg font-semibold">使用说明</h3>
+						<h3 class="text-lg font-semibold">
+							使用说明
+						</h3>
 					</div>
 				</template>
 				<div class="space-y-4 text-sm">
 					<div class="flex items-start gap-2">
 						<Icon name="i-lucide-check" class="size-4 text-green-500 mt-0.5" />
 						<div>
-							<p class="font-medium">支持格式</p>
-							<p class="text-(--ui-text-muted)">IPv4 地址（如 8.8.8.8）和 IPv6 地址（如 2001:4860:4860::8888）</p>
+							<p class="font-medium">
+								支持格式
+							</p>
+							<p class="text-(--ui-text-muted)">
+								IPv4 地址（如 8.8.8.8）和 IPv6 地址（如 2001:4860:4860::8888）
+							</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-2">
 						<Icon name="i-lucide-check" class="size-4 text-green-500 mt-0.5" />
 						<div>
-							<p class="font-medium">自动检测</p>
-							<p class="text-(--ui-text-muted)">点击"使用我的公网 IP"自动获取并查询当前公网 IP 地址</p>
+							<p class="font-medium">
+								自动检测
+							</p>
+							<p class="text-(--ui-text-muted)">
+								点击"使用我的公网 IP"自动获取并查询当前公网 IP 地址
+							</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-2">
 						<Icon name="i-lucide-check" class="size-4 text-green-500 mt-0.5" />
 						<div>
-							<p class="font-medium">数据精度</p>
-							<p class="text-(--ui-text-muted)">基于在线 API 实时查询，数据准确性和时效性更高</p>
+							<p class="font-medium">
+								数据精度
+							</p>
+							<p class="text-(--ui-text-muted)">
+								基于在线 API 实时查询，数据准确性和时效性更高
+							</p>
 						</div>
 					</div>
 				</div>
@@ -187,7 +248,7 @@
 		}
 	});
 
-	type LocationResult = {
+	interface LocationResult {
 		ip: string
 		location: {
 			country: string
@@ -197,13 +258,13 @@
 			rawInfo: string
 		}
 		isIpv4: boolean
-	};
+	}
 
-	type DatabaseInfo = {
+	interface DatabaseInfo {
 		apiEndpoint: string
 		supportsIpv4: boolean
 		supportsIpv6: boolean
-	};
+	}
 
 	const schema = z.object({
 		ipInput: z.string({
@@ -299,7 +360,7 @@
 	function isValidIpv4(value: string) {
 		const parts = value.split(".");
 		if (parts.length !== 4) return false;
-		return parts.every(part => {
+		return parts.every((part) => {
 			if (part === "") return false;
 			if (!/^\d+$/.test(part)) return false;
 			const num = Number(part);
@@ -309,11 +370,11 @@
 
 	function isValidIpv6(value: string) {
 		const trimmed = value.trim();
-		if (!/^[0-9a-fA-F:]+$/.test(trimmed)) return false;
+		if (!/^[0-9a-f:]+$/i.test(trimmed)) return false;
 		if (trimmed.includes("::")) {
 			if (trimmed.indexOf("::") !== trimmed.lastIndexOf("::")) return false;
 		}
-		const parts = trimmed.split(":").filter(part => part.length > 0);
+		const parts = trimmed.split(":").filter((part) => part.length > 0);
 		return parts.length <= 8;
 	}
 </script>

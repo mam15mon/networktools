@@ -5,13 +5,15 @@
 	>
 		<div class="space-y-8">
 			<!-- 设备类型选择 -->
-				<UCard class="bg-(--ui-bg)">
-					<template #header>
-						<div class="flex items-center gap-2">
-							<Icon name="i-lucide-settings" class="size-5" />
-							<h3 class="text-lg font-semibold">设备类型</h3>
-						</div>
-					</template>
+			<UCard class="bg-(--ui-bg)">
+				<template #header>
+					<div class="flex items-center gap-2">
+						<Icon name="i-lucide-settings" class="size-5" />
+						<h3 class="text-lg font-semibold">
+							设备类型
+						</h3>
+					</div>
+				</template>
 				<URadioGroup
 					v-model="deviceType"
 					:items="deviceOptions"
@@ -24,7 +26,9 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-terminal" class="size-5" />
-						<h3 class="text-lg font-semibold">NAT Server 配置</h3>
+						<h3 class="text-lg font-semibold">
+							NAT Server 配置
+						</h3>
 					</div>
 				</template>
 				<div class="space-y-4">
@@ -34,6 +38,7 @@
 						:rows="12"
 						class="font-mono text-sm"
 						@input="parseConfig"
+						@paste="handlePaste"
 					/>
 					<div class="flex justify-between items-center">
 						<p class="text-sm text-(--ui-text-muted)">
@@ -43,8 +48,8 @@
 							<UButton
 								variant="outline"
 								size="sm"
-								@click="clearConfig"
 								:disabled="!configText.trim()"
+								@click="clearConfig"
 							>
 								清空
 							</UButton>
@@ -66,20 +71,32 @@
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 					<UCard class="bg-(--ui-bg)">
 						<div class="text-center">
-							<p class="text-2xl font-bold text-green-600">{{ parseResult.successEntries.length }}</p>
-							<p class="text-sm text-(--ui-text-muted)">成功解析</p>
+							<p class="text-2xl font-bold text-green-600">
+								{{ parseResult.successEntries.length }}
+							</p>
+							<p class="text-sm text-(--ui-text-muted)">
+								成功解析
+							</p>
 						</div>
 					</UCard>
 					<UCard class="bg-(--ui-bg)">
 						<div class="text-center">
-							<p class="text-2xl font-bold text-red-600">{{ parseResult.failedEntries.length }}</p>
-							<p class="text-sm text-(--ui-text-muted)">解析失败</p>
+							<p class="text-2xl font-bold text-red-600">
+								{{ parseResult.failedEntries.length }}
+							</p>
+							<p class="text-sm text-(--ui-text-muted)">
+								解析失败
+							</p>
 						</div>
 					</UCard>
 					<UCard class="bg-(--ui-bg)">
 						<div class="text-center">
-							<p class="text-2xl font-bold text-blue-600">{{ totalEntries }}</p>
-							<p class="text-sm text-(--ui-text-muted)">总条目数</p>
+							<p class="text-2xl font-bold text-blue-600">
+								{{ totalEntries }}
+							</p>
+							<p class="text-sm text-(--ui-text-muted)">
+								总条目数
+							</p>
 						</div>
 					</UCard>
 				</div>
@@ -87,11 +104,13 @@
 				<!-- 成功解析的条目 -->
 				<div v-if="parseResult.successEntries.length > 0">
 					<div class="flex justify-between items-center mb-4">
-						<h3 class="text-xl font-semibold">解析结果</h3>
+						<h3 class="text-xl font-semibold">
+							解析结果
+						</h3>
 						<UButton
 							icon="i-lucide-download"
-							@click="handleExportClick"
 							:disabled="parseResult.successEntries.length === 0"
+							@click="handleExportClick"
 						>
 							导出到 Excel
 						</UButton>
@@ -101,15 +120,33 @@
 							<table class="w-full text-sm">
 								<thead>
 									<tr class="border-b border-(--ui-border)">
-										<th class="text-left p-3 font-medium">名称</th>
-										<th class="text-left p-3 font-medium">协议</th>
-										<th class="text-left p-3 font-medium">全局IP</th>
-										<th class="text-left p-3 font-medium">全局端口</th>
-										<th class="text-left p-3 font-medium">内部IP</th>
-										<th class="text-left p-3 font-medium">内部端口</th>
-										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">VRRP</th>
-										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">规则</th>
-										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">描述</th>
+										<th class="text-left p-3 font-medium">
+											名称
+										</th>
+										<th class="text-left p-3 font-medium">
+											协议
+										</th>
+										<th class="text-left p-3 font-medium">
+											全局IP
+										</th>
+										<th class="text-left p-3 font-medium">
+											全局端口
+										</th>
+										<th class="text-left p-3 font-medium">
+											内部IP
+										</th>
+										<th class="text-left p-3 font-medium">
+											内部端口
+										</th>
+										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">
+											VRRP
+										</th>
+										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">
+											规则
+										</th>
+										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">
+											描述
+										</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -118,15 +155,33 @@
 										:key="index"
 										class="border-b border-(--ui-border) hover:bg-(--ui-bg-muted)"
 									>
-										<td class="p-3 font-mono">{{ entry.name }}</td>
-										<td class="p-3">{{ entry.protocol }}</td>
-										<td class="p-3 font-mono">{{ entry.globalIp }}</td>
-										<td class="p-3 font-mono">{{ entry.globalPort }}</td>
-										<td class="p-3 font-mono">{{ entry.insideIp }}</td>
-										<td class="p-3 font-mono">{{ entry.insidePort }}</td>
-										<td v-if="deviceType === 'h3c'" class="p-3">{{ entry.vrrp }}</td>
-										<td v-if="deviceType === 'h3c'" class="p-3 font-mono">{{ entry.rule }}</td>
-										<td v-if="deviceType === 'h3c'" class="p-3">{{ entry.description }}</td>
+										<td class="p-3 font-mono">
+											{{ entry.name }}
+										</td>
+										<td class="p-3">
+											{{ entry.protocol }}
+										</td>
+										<td class="p-3 font-mono">
+											{{ entry.globalIp }}
+										</td>
+										<td class="p-3 font-mono">
+											{{ entry.globalPort }}
+										</td>
+										<td class="p-3 font-mono">
+											{{ entry.insideIp }}
+										</td>
+										<td class="p-3 font-mono">
+											{{ entry.insidePort }}
+										</td>
+										<td v-if="deviceType === 'h3c'" class="p-3">
+											{{ entry.vrrp }}
+										</td>
+										<td v-if="deviceType === 'h3c'" class="p-3 font-mono">
+											{{ entry.rule }}
+										</td>
+										<td v-if="deviceType === 'h3c'" class="p-3">
+											{{ entry.description }}
+										</td>
 									</tr>
 								</tbody>
 							</table>
@@ -136,7 +191,9 @@
 
 				<!-- 解析失败的条目 -->
 				<div v-if="parseResult.failedEntries.length > 0">
-					<h3 class="text-xl font-semibold mb-4 text-red-600">解析失败条目</h3>
+					<h3 class="text-xl font-semibold mb-4 text-red-600">
+						解析失败条目
+					</h3>
 					<UCard class="bg-(--ui-bg-muted) border-(--ui-border)">
 						<div class="space-y-2">
 							<div
@@ -156,36 +213,54 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-help-circle" class="size-5" />
-						<h3 class="text-lg font-semibold">使用说明</h3>
+						<h3 class="text-lg font-semibold">
+							使用说明
+						</h3>
 					</div>
 				</template>
 				<div class="space-y-4 text-sm">
 					<div class="flex items-start gap-2">
 						<Icon name="i-lucide-check" class="size-4 text-green-500 mt-0.5" />
 						<div>
-							<p class="font-medium">支持设备</p>
-							<p class="text-(--ui-text-muted)">华为防火墙、H3C 防火墙的 NAT Server 配置命令</p>
+							<p class="font-medium">
+								支持设备
+							</p>
+							<p class="text-(--ui-text-muted)">
+								华为防火墙、H3C 防火墙的 NAT Server 配置命令
+							</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-2">
 						<Icon name="i-lucide-check" class="size-4 text-green-500 mt-0.5" />
 						<div>
-							<p class="font-medium">华为格式</p>
-							<p class="text-(--ui-text-muted)">nat server protocol tcp global 202.100.10.1 80 inside 192.168.1.100 8080</p>
+							<p class="font-medium">
+								华为格式
+							</p>
+							<p class="text-(--ui-text-muted)">
+								nat server protocol tcp global 202.100.10.1 80 inside 192.168.1.100 8080
+							</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-2">
 						<Icon name="i-lucide-check" class="size-4 text-green-500 mt-0.5" />
 						<div>
-							<p class="font-medium">H3C 格式</p>
-							<p class="text-(--ui-text-muted)">nat server protocol tcp global 202.100.10.1 80 inside 192.168.1.100 8080 rule 100</p>
+							<p class="font-medium">
+								H3C 格式
+							</p>
+							<p class="text-(--ui-text-muted)">
+								nat server protocol tcp global 202.100.10.1 80 inside 192.168.1.100 8080 rule 100
+							</p>
 						</div>
 					</div>
 					<div class="flex items-start gap-2">
 						<Icon name="i-lucide-check" class="size-4 text-green-500 mt-0.5" />
 						<div>
-							<p class="font-medium">导出功能</p>
-							<p class="text-(--ui-text-muted)">支持将解析结果导出为 Excel 文件，便于后续处理</p>
+							<p class="font-medium">
+								导出功能
+							</p>
+							<p class="text-(--ui-text-muted)">
+								支持将解析结果导出为 Excel 文件，便于后续处理
+							</p>
 						</div>
 					</div>
 				</div>
@@ -202,7 +277,7 @@
 		category: "firewall"
 	});
 
-	type NatEntry = {
+	interface NatEntry {
 		name: string
 		protocol: string
 		globalIp: string
@@ -213,31 +288,39 @@
 		rule?: string
 		description?: string
 		command: string
-	};
+	}
 
-	type NatParseResult = {
+	interface NatParseResult {
 		successEntries: NatEntry[]
 		failedEntries: string[]
 		deviceType: string
-	};
+	}
 
 	const deviceOptions = [
 		{ label: "华为防火墙", value: "huawei" },
 		{ label: "H3C 防火墙", value: "h3c" }
 	] as const;
-type DeviceType = (typeof deviceOptions)[number]["value"];
-const deviceType = ref<DeviceType>(deviceOptions[0].value);
-const configText = ref("");
-const parseResult = ref<NatParseResult>({
-	successEntries: [],
-	failedEntries: [],
-	deviceType: "huawei"
-});
-const toast = useToast();
+	type DeviceType = (typeof deviceOptions)[number]["value"];
+	const deviceType = ref<DeviceType>(deviceOptions[0].value);
+	const configText = ref("");
+	const parseResult = ref<NatParseResult>({
+		successEntries: [],
+		failedEntries: [],
+		deviceType: "huawei"
+	});
+	const toast = useToast();
 
 	const totalEntries = computed(() =>
 		parseResult.value.successEntries.length + parseResult.value.failedEntries.length
 	);
+
+	// 处理粘贴事件
+	const handlePaste = (event: ClipboardEvent) => {
+		// 延迟一点确保粘贴内容已经更新到 v-model
+		setTimeout(() => {
+			parseConfig();
+		}, 100);
+	};
 
 	// 解析配置
 	const parseConfig = async () => {
@@ -289,6 +372,8 @@ nat server protocol udp global 202.100.10.2 53 inside 192.168.1.101 53 rule 101
 nat server protocol tcp global 202.100.10.3 443 inside 192.168.1.200 8443 rule 102 description Web server
 nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 vrrp 1`;
 		}
+
+		// 加载示例后自动解析
 		parseConfig();
 	};
 
@@ -305,15 +390,12 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 
 	// 处理导出点击事件
 	const handleExportClick = () => {
-		console.log("导出按钮被点击，成功条目数量:", parseResult.value.successEntries.length);
 		exportToExcel();
 	};
 
 	// 导出到 Excel
 	const exportToExcel = async () => {
-		console.log("导出功能被触发");
 		if (parseResult.value.successEntries.length === 0) {
-			console.log("没有成功条目，导出终止");
 			toast.add({
 				title: "暂无可导出的数据",
 				description: "请先粘贴并解析 NAT 配置。",
@@ -322,11 +404,8 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 			return;
 		}
 
-		console.log("开始创建 Excel 工作簿");
-
 		try {
 			const XLSX = await import("xlsx");
-			console.log("成功导入 XLSX 库");
 
 			// 创建工作簿
 			const wb = XLSX.utils.book_new();
@@ -343,7 +422,7 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 			successData.push(headers);
 
 			// 数据行
-			parseResult.value.successEntries.forEach(entry => {
+			parseResult.value.successEntries.forEach((entry) => {
 				const row = [
 					entry.name,
 					entry.protocol,
@@ -372,7 +451,7 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 			// 如果有失败条目，创建失败条目工作表
 			if (parseResult.value.failedEntries.length > 0) {
 				const failedData = [["解析失败条目"]];
-				parseResult.value.failedEntries.forEach(entry => {
+				parseResult.value.failedEntries.forEach((entry) => {
 					failedData.push([entry]);
 				});
 				const wsFailed = XLSX.utils.aoa_to_sheet(failedData);
@@ -380,15 +459,13 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 			}
 
 			// 生成 Excel 文件
-			const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-			const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+			const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+			const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
 			const fileName = `nat_config_${deviceType.value}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-			console.log("Excel 文件创建成功，文件名:", fileName);
 
 			// 保存文件
 			await saveFile(blob, fileName);
-
 		} catch (error) {
 			console.error("生成 Excel 文件失败:", error);
 			toast.add({
@@ -402,9 +479,6 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 
 	// 保存文件的通用函数
 	const saveFile = async (blob: Blob, fileName: string) => {
-		console.log("文件名:", fileName);
-		console.log("是否在 Tauri 环境:", isTauriEnvironment());
-
 		if (isTauriEnvironment()) {
 			try {
 				const { writeFile } = await import("@tauri-apps/plugin-fs");
@@ -414,43 +488,21 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 				const fullPath = await join(downloadsPath, fileName);
 				const arrayBuffer = await blob.arrayBuffer();
 				await writeFile(fullPath, new Uint8Array(arrayBuffer));
-				console.log("文件保存成功到下载目录:", fullPath);
 
+				// 直接打开文件
+				try {
+					const { openPath } = await import("@tauri-apps/plugin-opener");
+					await openPath(fullPath);
+				} catch (error) {
+					console.error("打开文件失败:", error);
+				}
+
+				// 显示导出成功提示
 				toast.add({
 					title: "导出成功",
-					description: `文件已保存至: ${fullPath}`,
+					description: `Excel 文件已保存并自动打开`,
 					icon: "i-lucide-check-circle",
-					timeout: 8000,
-					actions: [
-						{
-							label: "打开位置",
-							click: async () => {
-								try {
-									const { Command } = await import("@tauri-apps/plugin-shell");
-									const platform = navigator.platform.toLowerCase();
-									if (platform.includes("win")) {
-										const windowsPath = fullPath.replace(/\//g, "\\");
-										const command = new Command("open-explorer", [`/select,"${windowsPath}"`]);
-										await command.execute();
-									} else if (platform.includes("mac")) {
-										const command = new Command("open-folder", ["-R", fullPath]);
-										await command.execute();
-									} else {
-										const command = new Command("exec-sh", [`xdg-open "${downloadsPath}"`]);
-										await command.execute();
-									}
-								} catch (openError) {
-									console.error("打开文件位置失败:", openError);
-									toast.add({
-										title: "无法打开文件位置",
-										description: `请手动前往: ${downloadsPath}`,
-										icon: "i-lucide-alert-triangle",
-										timeout: 10000
-									});
-								}
-							}
-						}
-					]
+					timeout: 3000
 				});
 			} catch (error) {
 				console.error("Tauri保存失败:", error);
@@ -462,45 +514,75 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 				});
 			}
 		} else {
-			console.log("使用浏览器下载 API");
 			try {
-				console.log("准备下载 Excel 文件，大小:", blob.size);
-
 				// 创建下载链接
 				const url = URL.createObjectURL(blob);
-				const link = document.createElement('a');
+				const link = document.createElement("a");
 				link.href = url;
 				link.download = fileName;
-				link.style.display = 'none';
+				link.style.display = "none";
 				document.body.appendChild(link);
 				link.click();
 				document.body.removeChild(link);
 				URL.revokeObjectURL(url);
-
-				console.log("Excel 文件下载触发");
 
 				toast.add({
 					title: "导出成功",
 					description: `文件已下载: ${fileName}`,
 					icon: "i-lucide-check-circle",
 					timeout: 8000,
-					actions: [{
-						label: "复制路径",
-						click: async () => {
-							try {
-								// 在浏览器环境下，复制文件名到剪贴板
-								await navigator.clipboard.writeText(fileName);
-								// 显示一个简单的提示
-								toast.add({
-									title: "文件名已复制",
-									description: "请在下载目录中查找此文件",
-									timeout: 3000
-								});
-							} catch (copyError) {
-								console.log("无法复制文件名");
+					actions: [
+						{
+							label: "打开下载目录",
+							click: async () => {
+								try {
+									// 尝试打开下载目录
+									if (navigator.platform.toLowerCase().includes("win")) {
+										// Windows: 打开下载目录
+										window.open("shell:downloads", "_blank");
+									} else if (navigator.platform.toLowerCase().includes("mac")) {
+										// macOS: 使用 file:// 协议打开下载目录
+										window.open("file:///Users/$USER/Downloads", "_blank");
+									} else {
+										// Linux: 尝试打开下载目录
+										window.open("file:///home/$USER/Downloads", "_blank");
+									}
+
+									// 显示提示信息
+									toast.add({
+										title: "已尝试打开下载目录",
+										description: "请在浏览器中允许弹窗或手动打开下载目录",
+										icon: "i-lucide-info",
+										timeout: 5000
+									});
+								} catch (openError) {
+									console.error("打开下载目录失败:", openError);
+									toast.add({
+										title: "无法自动打开下载目录",
+										description: "请手动在浏览器中查找下载的文件",
+										icon: "i-lucide-alert-triangle",
+										timeout: 5000
+									});
+								}
+							}
+						},
+						{
+							label: "复制文件名",
+							click: async () => {
+								try {
+									// 在浏览器环境下，复制文件名到剪贴板
+									await navigator.clipboard.writeText(fileName);
+									// 显示一个简单的提示
+									toast.add({
+										title: "文件名已复制",
+										description: "请在下载目录中查找此文件",
+										timeout: 3000
+									});
+								} catch (copyError) {
+								}
 							}
 						}
-					}]
+					]
 				});
 			} catch (error) {
 				console.error("浏览器下载失败:", error);
@@ -516,6 +598,11 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 
 	// 监听设备类型变化
 	watch(deviceType, () => {
-		parseConfig();
+		// 设备类型变化时清空解析结果，但不自动解析
+		parseResult.value = {
+			successEntries: [],
+			failedEntries: [],
+			deviceType: deviceType.value
+		};
 	});
 </script>

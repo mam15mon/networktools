@@ -90,18 +90,18 @@
 		}
 	});
 
-	type SummaryRow = {
+	interface SummaryRow {
 		label: string
 		value: string
-	};
+	}
 
-	type NetworkRow = {
+	interface NetworkRow {
 		network: string
 		range: string
 		broadcast: string
-	};
+	}
 
-	type SubnetResult = {
+	interface SubnetResult {
 		ipAddress: string
 		networkAddress: string
 		broadcastAddress: string
@@ -121,13 +121,12 @@
 		inAddrArpa: string
 		ipv4MappedAddress: string
 		sixToFourPrefix: string
-	};
+	}
 
-	type SubnetResponse = {
+	interface SubnetResponse {
 		result: SubnetResult
 		relatedNetworks: NetworkRow[]
-	};
-
+	}
 
 	const schema = z.object({
 		cidrInput: z.string({
@@ -166,27 +165,27 @@
 	const summaryRows = computed<SummaryRow[]>(() => {
 		if (!result.value) return [];
 		return [
-		{ label: "IP 地址", value: result.value.ipAddress },
-		{ label: "网络地址", value: result.value.networkAddress },
-		{ label: "可用主机范围", value: result.value.usableRange },
-		{ label: "广播地址", value: result.value.broadcastAddress },
-		{ label: "主机总数", value: result.value.totalHosts },
-		{ label: "可用主机数", value: result.value.usableHosts },
-		{ label: "子网掩码", value: result.value.subnetMask },
-		{ label: "反掩码", value: result.value.wildcardMask },
-		{ label: "二进制子网掩码", value: result.value.binarySubnetMask },
-		{ label: "IP 类", value: result.value.ipClass },
-		{ label: "CIDR 表示", value: result.value.cidrNotation },
-		{ label: "IP 类型", value: result.value.ipType },
-		{ label: "短格式", value: result.value.shortNotation },
-		{ label: "二进制 ID", value: result.value.binaryId },
-		{ label: "整数 ID", value: result.value.integerId },
-		{ label: "十六进制 ID", value: result.value.hexId },
-		{ label: "in-addr.arpa", value: result.value.inAddrArpa },
-		{ label: "IPv4 映射地址", value: result.value.ipv4MappedAddress },
-		{ label: "6to4 前缀", value: result.value.sixToFourPrefix }
-	];
-});
+			{ label: "IP 地址", value: result.value.ipAddress },
+			{ label: "网络地址", value: result.value.networkAddress },
+			{ label: "可用主机范围", value: result.value.usableRange },
+			{ label: "广播地址", value: result.value.broadcastAddress },
+			{ label: "主机总数", value: result.value.totalHosts },
+			{ label: "可用主机数", value: result.value.usableHosts },
+			{ label: "子网掩码", value: result.value.subnetMask },
+			{ label: "反掩码", value: result.value.wildcardMask },
+			{ label: "二进制子网掩码", value: result.value.binarySubnetMask },
+			{ label: "IP 类", value: result.value.ipClass },
+			{ label: "CIDR 表示", value: result.value.cidrNotation },
+			{ label: "IP 类型", value: result.value.ipType },
+			{ label: "短格式", value: result.value.shortNotation },
+			{ label: "二进制 ID", value: result.value.binaryId },
+			{ label: "整数 ID", value: result.value.integerId },
+			{ label: "十六进制 ID", value: result.value.hexId },
+			{ label: "in-addr.arpa", value: result.value.inAddrArpa },
+			{ label: "IPv4 映射地址", value: result.value.ipv4MappedAddress },
+			{ label: "6to4 前缀", value: result.value.sixToFourPrefix }
+		];
+	});
 
 	const relatedNetworkRows = computed<NetworkRow[]>(() => {
 		if (!result.value) return [];
@@ -200,14 +199,14 @@
 		const step = 2 ** (32 - cidr);
 
 		if (cidr >= 25 && cidr <= 29) {
-			const base = ipInt & 0xffffff00;
+			const base = ipInt & 0xFFFFFF00;
 			const subnetCount = 1 << (cidr - 24);
 			for (let index = 0; index < subnetCount; index++) {
 				const networkInt = toUint32(base + index * step);
 				rows.push(buildNetworkRow(networkInt, step, cidr));
 			}
 		} else if (cidr >= 17 && cidr <= 23) {
-			const base = ipInt & 0xffff0000;
+			const base = ipInt & 0xFFFF0000;
 			const subnetCount = 1 << (cidr - 16);
 			for (let index = 0; index < subnetCount; index++) {
 				const networkInt = toUint32(base + index * step);
@@ -297,7 +296,7 @@
 	function isValidIpv4(value: string) {
 		const parts = value.split(".");
 		if (parts.length !== 4) return false;
-		return parts.every(part => {
+		return parts.every((part) => {
 			if (part === "") return false;
 			if (!/^\d+$/.test(part)) return false;
 			const num = Number(part);
@@ -316,7 +315,7 @@
 	}
 
 	function intToIpv4(intValue: number) {
-		return [24, 16, 8, 0].map(shift => ((intValue >>> shift) & 0xff).toString()).join(".");
+		return [24, 16, 8, 0].map((shift) => ((intValue >>> shift) & 0xFF).toString()).join(".");
 	}
 
 	function buildNetworkRow(networkInt: number, step: number, cidr: number): NetworkRow {

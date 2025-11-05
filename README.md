@@ -199,7 +199,6 @@ A: 需要更新 GeoIP 数据库，或检查网络连接
 - [NuxtUI](https://ui.nuxt.com) - 优雅的 UI 组件库
 - [TailwindCSS](https://tailwindcss.com) - 实用优先的 CSS 框架
 
-
 ---
 
 <p align="center">

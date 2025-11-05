@@ -1,4 +1,4 @@
-	export const usePages = () => {
+export const usePages = () => {
 	const router = useRouter();
 	const currentRoute = useRoute();
 	const { pageCategories } = useAppConfig();

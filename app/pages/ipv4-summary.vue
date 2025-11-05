@@ -93,143 +93,143 @@
 </template>
 
 <script lang="ts" setup>
-import LayoutTile from "~/components/Layout/Tile.vue";
+	import LayoutTile from "~/components/Layout/Tile.vue";
 
-definePageMeta({
-	name: "IPv4 路由汇总",
-	icon: "lucide:git-merge",
-	description: "IPv4 地址段汇总工具",
-	category: "tools"
-});
+	definePageMeta({
+		name: "IPv4 路由汇总",
+		icon: "lucide:git-merge",
+		description: "IPv4 地址段汇总工具",
+		category: "tools"
+	});
 
-type NonPreciseSummary = {
-	cidr: string
-	totalAddresses: number
-	inputAddresses: number
-	extraAddresses: number
-	extraPercentage: number
-};
-
-type AggregateResult = {
-	normalizedInputs: string[]
-	preciseSummary: string[]
-	approximateSummary: string
-	nonPreciseSummary?: NonPreciseSummary
-	errors: string[]
-};
-
-const schema = z.object({
-	entries: z.string({
-		error: "请输入至少一条 IPv4 内容"
-	}).trim().nonempty("请输入至少一条 IPv4 内容")
-});
-
-type Schema = zInfer<typeof schema>;
-
-const formState = reactive<Schema>({
-	entries: "192.168.1.0/24\n192.168.1.100-200\n10.0.0.1"
-});
-
-const result = ref<AggregateResult | null>(null);
-const errorMessage = ref("");
-const isAggregating = ref(false);
-
-const tableUi = {
-	td: {
-		base: "align-top whitespace-pre text-sm"
-	}
-};
-
-const inputColumns = [
-	{ accessorKey: "value", header: "有效条目", id: "value" }
-];
-
-const preciseColumns = [
-	{ accessorKey: "cidr", header: "CIDR", id: "cidr" }
-];
-
-const approxColumns = computed(() => {
-	if (result.value?.nonPreciseSummary) {
-		return [
-			{ accessorKey: "cidr", header: "CIDR", id: "cidr" },
-			{ accessorKey: "totalAddresses", header: "总地址数", id: "totalAddresses" },
-			{ accessorKey: "inputAddresses", header: "输入地址数", id: "inputAddresses" },
-			{ accessorKey: "extraAddresses", header: "额外地址数", id: "extraAddresses" },
-			{ accessorKey: "extraPercentage", header: "额外地址百分比", id: "extraPercentage" }
-		];
-	}
-	return [{ accessorKey: "cidr", header: "CIDR", id: "cidr" }];
-});
-
-const inputRows = computed(() => {
-	if (!result.value) return [];
-	return result.value.normalizedInputs.map((value) => ({ value }));
-});
-
-const preciseRows = computed(() => {
-	if (!result.value) return [];
-	return result.value.preciseSummary.map((cidr) => ({ cidr }));
-});
-
-const approxRows = computed(() => {
-	if (!result.value) return [];
-
-	// 如果有新的非精确汇总数据，使用它
-	if (result.value.nonPreciseSummary) {
-		const summary = result.value.nonPreciseSummary;
-		return [{
-			cidr: summary.cidr,
-			totalAddresses: summary.totalAddresses.toLocaleString(),
-			inputAddresses: summary.inputAddresses.toLocaleString(),
-			extraAddresses: summary.extraAddresses.toLocaleString(),
-			extraPercentage: `${summary.extraPercentage.toFixed(2)}%`
-		}];
+	interface NonPreciseSummary {
+		cidr: string
+		totalAddresses: number
+		inputAddresses: number
+		extraAddresses: number
+		extraPercentage: number
 	}
 
-	// 否则回退到旧的简单显示
-	return [{ cidr: result.value.approximateSummary }];
-});
-
-const aggregate = async () => {
-	isAggregating.value = true;
-	errorMessage.value = "";
-
-	const parsed = schema.safeParse(formState);
-	if (!parsed.success) {
-		errorMessage.value = parsed.error.issues[0]?.message || "输入校验失败";
-		isAggregating.value = false;
-		return;
+	interface AggregateResult {
+		normalizedInputs: string[]
+		preciseSummary: string[]
+		approximateSummary: string
+		nonPreciseSummary?: NonPreciseSummary
+		errors: string[]
 	}
 
-	const entries = parsed.data.entries
-		.split(/\r?\n|,/)
-		.map((item) => item.trim())
-		.filter((item) => item.length > 0);
+	const schema = z.object({
+		entries: z.string({
+			error: "请输入至少一条 IPv4 内容"
+		}).trim().nonempty("请输入至少一条 IPv4 内容")
+	});
 
-	if (!entries.length) {
-		errorMessage.value = "请输入至少一条 IPv4 内容";
-		isAggregating.value = false;
-		return;
-	}
+	type Schema = zInfer<typeof schema>;
 
-	try {
-		const response = await useTauriCoreInvoke<AggregateResult>("aggregate_ipv4", {
-			items: entries
-		});
-		result.value = response;
-	} catch (error) {
-		errorMessage.value = typeof error === "string"
-			? error
-			: (error as Error)?.message || "汇总失败";
+	const formState = reactive<Schema>({
+		entries: "192.168.1.0/24\n192.168.1.100-200\n10.0.0.1"
+	});
+
+	const result = ref<AggregateResult | null>(null);
+	const errorMessage = ref("");
+	const isAggregating = ref(false);
+
+	const tableUi = {
+		td: {
+			base: "align-top whitespace-pre text-sm"
+		}
+	};
+
+	const inputColumns = [
+		{ accessorKey: "value", header: "有效条目", id: "value" }
+	];
+
+	const preciseColumns = [
+		{ accessorKey: "cidr", header: "CIDR", id: "cidr" }
+	];
+
+	const approxColumns = computed(() => {
+		if (result.value?.nonPreciseSummary) {
+			return [
+				{ accessorKey: "cidr", header: "CIDR", id: "cidr" },
+				{ accessorKey: "totalAddresses", header: "总地址数", id: "totalAddresses" },
+				{ accessorKey: "inputAddresses", header: "输入地址数", id: "inputAddresses" },
+				{ accessorKey: "extraAddresses", header: "额外地址数", id: "extraAddresses" },
+				{ accessorKey: "extraPercentage", header: "额外地址百分比", id: "extraPercentage" }
+			];
+		}
+		return [{ accessorKey: "cidr", header: "CIDR", id: "cidr" }];
+	});
+
+	const inputRows = computed(() => {
+		if (!result.value) return [];
+		return result.value.normalizedInputs.map((value) => ({ value }));
+	});
+
+	const preciseRows = computed(() => {
+		if (!result.value) return [];
+		return result.value.preciseSummary.map((cidr) => ({ cidr }));
+	});
+
+	const approxRows = computed(() => {
+		if (!result.value) return [];
+
+		// 如果有新的非精确汇总数据，使用它
+		if (result.value.nonPreciseSummary) {
+			const summary = result.value.nonPreciseSummary;
+			return [{
+				cidr: summary.cidr,
+				totalAddresses: summary.totalAddresses.toLocaleString(),
+				inputAddresses: summary.inputAddresses.toLocaleString(),
+				extraAddresses: summary.extraAddresses.toLocaleString(),
+				extraPercentage: `${summary.extraPercentage.toFixed(2)}%`
+			}];
+		}
+
+		// 否则回退到旧的简单显示
+		return [{ cidr: result.value.approximateSummary }];
+	});
+
+	const aggregate = async () => {
+		isAggregating.value = true;
+		errorMessage.value = "";
+
+		const parsed = schema.safeParse(formState);
+		if (!parsed.success) {
+			errorMessage.value = parsed.error.issues[0]?.message || "输入校验失败";
+			isAggregating.value = false;
+			return;
+		}
+
+		const entries = parsed.data.entries
+			.split(/\r?\n|,/)
+			.map((item) => item.trim())
+			.filter((item) => item.length > 0);
+
+		if (!entries.length) {
+			errorMessage.value = "请输入至少一条 IPv4 内容";
+			isAggregating.value = false;
+			return;
+		}
+
+		try {
+			const response = await useTauriCoreInvoke<AggregateResult>("aggregate_ipv4", {
+				items: entries
+			});
+			result.value = response;
+		} catch (error) {
+			errorMessage.value = typeof error === "string"
+				? error
+				: (error as Error)?.message || "汇总失败";
+			result.value = null;
+		} finally {
+			isAggregating.value = false;
+		}
+	};
+
+	const reset = () => {
+		formState.entries = "";
 		result.value = null;
-	} finally {
-		isAggregating.value = false;
-	}
-};
-
-const reset = () => {
-	formState.entries = "";
-	result.value = null;
-	errorMessage.value = "";
-};
+		errorMessage.value = "";
+	};
 </script>
