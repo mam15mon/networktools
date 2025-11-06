@@ -106,6 +106,8 @@
 				{ "path": "$APPDATA/**" }
 			]
 		},
+		"dialog:allow-open",
+		"dialog:allow-save",
 		"store:default",
 		"core:webview:allow-create-webview",
 		"core:webview:allow-create-webview-window"

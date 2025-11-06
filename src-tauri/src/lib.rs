@@ -54,6 +54,8 @@ pub fn run() {
             nat_batch_generator::convert_excel_to_entries,
             nat_batch_generator::generate_nat_commands,
             nat_batch_generator::split_port_ranges,
+            nat_batch_generator::export_nat_template,
+            nat_batch_generator::export_nat_commands,
             isp_manager::detect_isp_info,
             isp_manager::add_elastic_ip_mapping,
             isp_manager::bulk_add_elastic_ip_mappings,

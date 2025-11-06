@@ -2320,14 +2320,17 @@ dependencies = [
  "calamine",
  "chrono",
  "dirs 5.0.1",
+ "ipnet",
  "num-bigint",
  "num-format",
  "num-traits",
  "regex",
  "reqwest 0.11.27",
+ "rust_xlsxwriter",
  "serde",
  "serde_json",
  "serde_yaml",
+ "strsim",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
@@ -2337,8 +2340,10 @@ dependencies = [
  "tauri-plugin-os",
  "tauri-plugin-shell",
  "tauri-plugin-store",
+ "tempfile",
  "tokio",
  "uuid",
+ "zip",
 ]
 
 [[package]]
@@ -3496,6 +3501,18 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "rust_xlsxwriter"
+version = "0.64.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5f47f5318c1e512e57c07781559367577b1eb9618325cf1574cd30d38b112c5"
+dependencies = [
+ "chrono",
+ "lazy_static",
+ "regex",
+ "zip",
 ]
 
 [[package]]
