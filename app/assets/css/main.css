@@ -31,6 +31,15 @@
 	.absolute-center-v {
 		@apply top-1/2 transform -translate-y-1/2;
 	}
+
+	/* 通用下拉框样式 */
+	.select-base {
+		@apply w-full rounded-md border border-(--ui-border) bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary) focus:border-(--ui-primary) transition-colors cursor-pointer;
+	}
+
+	.select-compact {
+		@apply select-base px-2 py-1;
+	}
 }
 
 .page-enter-active,
