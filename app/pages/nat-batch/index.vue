@@ -207,21 +207,19 @@
 											/>
 										</td>
 										<td class="px-3 py-2 align-top">
-											<input
+											<UInput
 												v-model="row.internalIp"
-												type="text"
 												placeholder="192.168.1.100"
-												class="w-full rounded-md border border-(--ui-border) bg-transparent px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
-											>
+												size="sm"
+											/>
 										</td>
 										<td class="px-3 py-2 align-top">
-											<input
+											<UInput
 												v-model="row.internalPort"
-												:type="row.protocol === 'ANY' ? 'text' : 'text'"
-												:disabled="row.protocol === 'ANY' || row.protocol === 'ICMP'"
 												placeholder="80 或 8000-8010"
-												class="w-full rounded-md border border-(--ui-border) bg-transparent px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
-											>
+												:disabled="row.protocol === 'ANY' || row.protocol === 'ICMP'"
+												size="sm"
+											/>
 										</td>
 										<td class="px-3 py-2 align-top">
 											<textarea
@@ -232,13 +230,12 @@
 											/>
 										</td>
 										<td class="px-3 py-2 align-top">
-											<input
+											<UInput
 												v-model="row.publicPort"
-												:type="row.protocol === 'ANY' ? 'text' : 'text'"
-												:disabled="row.protocol === 'ANY' || row.protocol === 'ICMP'"
 												placeholder="80 或 8000-8010"
-												class="w-full rounded-md border border-(--ui-border) bg-transparent px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
-											>
+												:disabled="row.protocol === 'ANY' || row.protocol === 'ICMP'"
+												size="sm"
+											/>
 										</td>
 										<td class="px-3 py-2 text-center align-top">
 											<UButton
@@ -405,14 +402,13 @@
 						<label class="text-sm font-semibold text-(--ui-text-muted)">
 							VRRP ID
 						</label>
-						<input
+						<UInput
 							v-model="vrrpId"
 							type="number"
-							min="1"
-							max="65535"
+							:min="1"
+							:max="65535"
 							placeholder="请输入 H3C VRRP ID"
-							class="w-full rounded-md border border-(--ui-border) bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
-						>
+						/>
 					</div>
 					<div>
 						<NuxtLink to="/nat-batch/settings">
