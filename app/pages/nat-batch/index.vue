@@ -51,7 +51,7 @@
 								</label>
 								<select
 									v-model="excelState.selectedSheet"
-									class="w-full rounded-md border border-(--ui-border) bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
+									class="w-full rounded-md border border-(--ui-border) bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary) focus:border-(--ui-primary) transition-colors cursor-pointer"
 								>
 									<option v-for="sheet in excelState.analysis.sheetNames" :key="sheet" :value="sheet">
 										{{ sheet }}
@@ -84,7 +84,7 @@
 										</label>
 										<select
 											v-model="excelState.columnMapping[field]"
-											class="w-full rounded-md border border-(--ui-border) bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
+											class="w-full rounded-md border border-(--ui-border) bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary) focus:border-(--ui-primary) transition-colors cursor-pointer"
 										>
 											<option value="">
 												未选择
@@ -210,7 +210,7 @@
 										<td class="px-3 py-2 align-top">
 											<select
 												v-model="row.protocol"
-												class="w-full rounded-md border border-(--ui-border) bg-transparent px-2 py-1 text-sm"
+												class="w-full rounded-md border border-(--ui-border) bg-white dark:bg-gray-800 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary) focus:border-(--ui-primary) transition-colors cursor-pointer"
 											>
 												<option value="TCP">
 													TCP
