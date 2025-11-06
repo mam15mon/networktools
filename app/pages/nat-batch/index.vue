@@ -519,7 +519,7 @@
 		});
 	});
 
-	const validationColumns = [
+	const validationColumns = computed(() => [
 		{
 			key: "rowIndex",
 			label: "原始行",
@@ -545,7 +545,7 @@
 			key: "publicPort",
 			label: "公网端口"
 		}
-	];
+	]);
 	const previewEntries = computed(() => natEntries.value.slice(0, 10));
 	const isColumnMappingIncomplete = computed(() => {
 		if (!excelState.analysis) return true;
