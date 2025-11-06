@@ -92,35 +92,16 @@
 							</div>
 
 							<div class="space-y-2">
-								<h4 class="text-base font-semibold">
-									数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
-								</h4>
-								<div class="overflow-x-auto rounded-md border border-(--ui-border)">
-									<table class="w-full text-sm">
-										<thead>
-											<tr class="bg-(--ui-bg-muted)">
-												<th
-													v-for="(column, index) in excelColumns"
-													:key="`header-${index}`"
-													class="whitespace-nowrap px-3 py-2 text-left font-medium"
-												>
-													{{ column || `列 ${index + 1}` }}
-												</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr
-												v-for="(row, rowIndex) in previewRows"
-												:key="`preview-${rowIndex}`"
-												class="border-t border-(--ui-border)"
-											>
-												<td v-for="(cell, cellIndex) in row" :key="`cell-${rowIndex}-${cellIndex}`" class="px-3 py-2 align-top whitespace-pre-wrap">
-													{{ cell }}
-												</td>
-											</tr>
-										</tbody>
-									</table>
+								<div class="flex items-center justify-between">
+									<h4 class="text-base font-semibold">
+										数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
+									</h4>
 								</div>
+								<UTable
+									:columns="excelPreviewColumns"
+									:rows="excelPreviewRows"
+									class="w-full"
+								/>
 							</div>
 						</div>
 
@@ -222,11 +203,10 @@
 											/>
 										</td>
 										<td class="px-3 py-2 align-top">
-											<textarea
+											<UInput
 												v-model="row.publicIp"
-												:rows="2"
-												placeholder="可填写多个 IP，支持换行"
-												class="w-full resize-none rounded-md border border-(--ui-border) bg-transparent px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
+												placeholder="222.240.138.4"
+												size="sm"
 											/>
 										</td>
 										<td class="px-3 py-2 align-top">
@@ -251,7 +231,7 @@
 							</table>
 						</div>
 						<p class="text-sm text-(--ui-text-muted)">
-							提示：协议为 ANY 或 ICMP 时无需填写端口；支持端口范围（例如 8000-8010），多个公网 IP 请使用换行。
+							提示：协议为 ANY 或 ICMP 时无需填写端口；支持端口范围（例如 8000-8010）。
 						</p>
 						<div class="flex flex-wrap gap-3">
 							<UButton
@@ -309,62 +289,32 @@
 								刷新预览
 							</UButton>
 						</div>
-						<div class="overflow-x-auto rounded-md border border-(--ui-border)">
-							<table class="w-full text-sm">
-								<thead>
-									<tr class="bg-(--ui-bg-muted)">
-										<th class="px-3 py-2 text-left font-medium">
-											原始行
-										</th>
-										<th class="px-3 py-2 text-left font-medium">
-											协议
-										</th>
-										<th class="px-3 py-2 text-left font-medium">
-											内部地址
-										</th>
-										<th class="px-3 py-2 text-left font-medium">
-											端口
-										</th>
-										<th class="px-3 py-2 text-left font-medium">
-											公网地址
-										</th>
-										<th class="px-3 py-2 text-left font-medium">
-											公网端口
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-for="entry in previewEntries" :key="`entry-${entry.rowIndex}`" class="border-t border-(--ui-border)">
-										<td class="px-3 py-2 align-top">
-											第 {{ entry.rowIndex }} 行
-										</td>
-										<td class="px-3 py-2 align-top">
-											{{ entry.protocol }}
-										</td>
-										<td class="px-3 py-2 align-top">
-											{{ entry.internalIp }}
-										</td>
-										<td class="px-3 py-2 align-top">
-											<div v-if="entry.internalPortStart !== null">
-												{{ formatPortRange(entry.internalPortStart, entry.internalPortEnd) }}
-											</div>
-										</td>
-										<td class="px-3 py-2 align-top">
-											<ul class="space-y-1">
-												<li v-for="ip in entry.publicIps" :key="`pub-${entry.rowIndex}-${ip}`">
-													{{ ip }}
-												</li>
-											</ul>
-										</td>
-										<td class="px-3 py-2 align-top">
-											<div v-if="entry.publicPortStart !== null">
-												{{ formatPortRange(entry.publicPortStart, entry.publicPortEnd) }}
-											</div>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
+						<UTable
+							:columns="validationColumns"
+							:rows="previewEntries"
+							class="w-full"
+						>
+							<template #rowIndex-data="{ row }">
+								第 {{ row.rowIndex }} 行
+							</template>
+							<template #internalPort-data="{ row }">
+								<div v-if="row.internalPortStart !== null">
+									{{ formatPortRange(row.internalPortStart, row.internalPortEnd) }}
+								</div>
+							</template>
+							<template #publicIps-data="{ row }">
+								<ul class="space-y-1">
+									<li v-for="ip in row.publicIps" :key="`pub-${row.rowIndex}-${ip}`">
+										{{ ip }}
+									</li>
+								</ul>
+							</template>
+							<template #publicPort-data="{ row }">
+								<div v-if="row.publicPortStart !== null">
+									{{ formatPortRange(row.publicPortStart, row.publicPortEnd) }}
+								</div>
+							</template>
+						</UTable>
 					</div>
 				</div>
 			</UCard>
@@ -482,13 +432,11 @@
 					</div>
 				</div>
 			</UCard>
-
 		</div>
 	</LayoutTile>
 </template>
 
 <script lang="ts" setup>
-	import { computed, reactive, ref, watch } from "vue";
 	import type {
 		ConvertResponse,
 		DeviceType,
@@ -497,6 +445,7 @@
 		ManualEntryRequest,
 		NatEntry
 	} from "~/types/nat-batch";
+	import { computed, reactive, ref, watch } from "vue";
 	import { extractErrorMessage } from "~/utils/error";
 
 	definePageMeta({
@@ -526,68 +475,115 @@
 
 	const toast = useToast();
 
-const excelState = reactive({
-	filePath: "",
-	analysis: null as ExcelAnalysis | null,
-	selectedSheet: "",
-	columnMapping: {} as Record<string, string>,
-	previewRows: [] as string[][],
-	isLoading: false
-});
+	const excelState = reactive({
+		filePath: "",
+		analysis: null as ExcelAnalysis | null,
+		selectedSheet: "",
+		columnMapping: {} as Record<string, string>,
+		previewRows: [] as string[][],
+		isLoading: false
+	});
 
-const convertLoading = ref(false);
-const generationLoading = ref(false);
-const convertErrors = ref<string[]>([]);
-const natEntries = ref<NatEntry[]>([]);
-const generatedCommands = ref<string[]>([]);
-const missingElasticIps = ref<string[]>([]);
+	const convertLoading = ref(false);
+	const generationLoading = ref(false);
+	const convertErrors = ref<string[]>([]);
+	const natEntries = ref<NatEntry[]>([]);
+	const generatedCommands = ref<string[]>([]);
+	const missingElasticIps = ref<string[]>([]);
 
-const manualRows = ref<ManualRow[]>([createManualRow()]);
+	const manualRows = ref<ManualRow[]>([createManualRow()]);
 
-const useElasticIp = ref(true);
-const deviceType = ref<DeviceType>("huawei");
-const vrrpId = ref("");
+	const useElasticIp = ref(true);
+	const deviceType = ref<DeviceType>("huawei");
+	const vrrpId = ref("");
 
-const excelColumns = computed(() => excelState.analysis?.columns ?? []);
-const previewRows = computed(() => excelState.previewRows.slice(0, 10));
-const previewEntries = computed(() => natEntries.value.slice(0, 10));
-const isColumnMappingIncomplete = computed(() => {
-	if (!excelState.analysis) return true;
-	return requiredFields.some((field) => !excelState.columnMapping[field]);
-});
+	const excelColumns = computed(() => excelState.analysis?.columns ?? []);
+	const previewRows = computed(() => excelState.previewRows.slice(0, 10));
 
-const commandsPreview = computed(() => generatedCommands.value.join("\n"));
+	const excelPreviewColumns = computed(() => {
+		const _columns = excelColumns.value;
+		return _columns.map((column, index) => ({
+			key: `col_${index}`,
+			label: column || `列 ${index + 1}`
+		}));
+	});
 
-const deviceOptions = [
-	{ label: "华为", value: "huawei" },
-	{ label: "H3C", value: "h3c" }
-];
+	const excelPreviewRows = computed(() => {
+		const _columns = excelColumns.value;
+		return previewRows.value.map((row) => {
+			const rowObj: Record<string, string> = {};
+			row.forEach((cell, index) => {
+				rowObj[`col_${index}`] = cell;
+			});
+			return rowObj;
+		});
+	});
 
-const shouldIgnoreSheetChange = ref(false);
-
-watch(
-	() => excelState.selectedSheet,
-	(sheet, oldSheet) => {
-		if (shouldIgnoreSheetChange.value) {
-			shouldIgnoreSheetChange.value = false;
-			return;
+	const validationColumns = [
+		{
+			key: "rowIndex",
+			label: "原始行",
+			rowClass: "text-center"
+		},
+		{
+			key: "protocol",
+			label: "协议"
+		},
+		{
+			key: "internalIp",
+			label: "内部地址"
+		},
+		{
+			key: "internalPort",
+			label: "端口"
+		},
+		{
+			key: "publicIps",
+			label: "公网地址"
+		},
+		{
+			key: "publicPort",
+			label: "公网端口"
 		}
-		if (!excelState.analysis || !excelState.filePath || sheet === oldSheet || !sheet) {
-			return;
-		}
-		void analyzeExcel(sheet);
-	}
-);
+	];
+	const previewEntries = computed(() => natEntries.value.slice(0, 10));
+	const isColumnMappingIncomplete = computed(() => {
+		if (!excelState.analysis) return true;
+		return requiredFields.some((field) => !excelState.columnMapping[field]);
+	});
 
-watch(
-	() => mode.value,
-	() => {
-		convertErrors.value = [];
-		natEntries.value = [];
-		generatedCommands.value = [];
-		missingElasticIps.value = [];
-	}
-);
+	const commandsPreview = computed(() => generatedCommands.value.join("\n"));
+
+	const deviceOptions = [
+		{ label: "华为", value: "huawei" },
+		{ label: "H3C", value: "h3c" }
+	];
+
+	const shouldIgnoreSheetChange = ref(false);
+
+	watch(
+		() => excelState.selectedSheet,
+		(sheet, oldSheet) => {
+			if (shouldIgnoreSheetChange.value) {
+				shouldIgnoreSheetChange.value = false;
+				return;
+			}
+			if (!excelState.analysis || !excelState.filePath || sheet === oldSheet || !sheet) {
+				return;
+			}
+			void analyzeExcel(sheet);
+		}
+	);
+
+	watch(
+		() => mode.value,
+		() => {
+			convertErrors.value = [];
+			natEntries.value = [];
+			generatedCommands.value = [];
+			missingElasticIps.value = [];
+		}
+	);
 
 	function createManualRow(): ManualRow {
 		return {
@@ -656,42 +652,42 @@ watch(
 		}
 	}
 
-async function analyzeExcel(sheetName?: string) {
-	if (!excelState.filePath) return;
-	excelState.isLoading = true;
-	try {
-		const targetSheet = sheetName ?? excelState.selectedSheet;
-		const normalizedSheet = targetSheet && targetSheet.trim().length > 0 ? targetSheet : undefined;
+	async function analyzeExcel(sheetName?: string) {
+		if (!excelState.filePath) return;
+		excelState.isLoading = true;
+		try {
+			const targetSheet = sheetName ?? excelState.selectedSheet;
+			const normalizedSheet = targetSheet && targetSheet.trim().length > 0 ? targetSheet : undefined;
 
-		const analysis = await useTauriCoreInvoke<ExcelAnalysis>("process_excel_data", {
-			request: {
-				filePath: excelState.filePath,
-				sheetName: normalizedSheet
-			}
-		});
+			const analysis = await useTauriCoreInvoke<ExcelAnalysis>("process_excel_data", {
+				request: {
+					filePath: excelState.filePath,
+					sheetName: normalizedSheet
+				}
+			});
 
-		excelState.analysis = analysis;
-		shouldIgnoreSheetChange.value = true;
-		excelState.selectedSheet = analysis.selectedSheet;
-		excelState.columnMapping = requiredFields.reduce<Record<string, string>>((acc, field) => {
-			acc[field] = analysis.suggestedMapping[field] ?? "";
-			return acc;
-		}, {});
-		excelState.previewRows = analysis.previewRows;
-		convertErrors.value = [];
-		natEntries.value = [];
-		generatedCommands.value = [];
-		missingElasticIps.value = [];
-		toast.add({
-			title: "Excel 加载成功",
-			description: `检测到 ${analysis.totalRows} 行数据，正在自动解析`,
-			color: "success"
-		});
-		await convertExcelData();
-	} catch (error) {
-		excelState.analysis = null;
-		excelState.previewRows = [];
-		convertErrors.value = [extractErrorMessage(error)];
+			excelState.analysis = analysis;
+			shouldIgnoreSheetChange.value = true;
+			excelState.selectedSheet = analysis.selectedSheet;
+			excelState.columnMapping = requiredFields.reduce<Record<string, string>>((acc, field) => {
+				acc[field] = analysis.suggestedMapping[field] ?? "";
+				return acc;
+			}, {});
+			excelState.previewRows = analysis.previewRows;
+			convertErrors.value = [];
+			natEntries.value = [];
+			generatedCommands.value = [];
+			missingElasticIps.value = [];
+			toast.add({
+				title: "Excel 加载成功",
+				description: `检测到 ${analysis.totalRows} 行数据，正在自动解析`,
+				color: "success"
+			});
+			await convertExcelData();
+		} catch (error) {
+			excelState.analysis = null;
+			excelState.previewRows = [];
+			convertErrors.value = [extractErrorMessage(error)];
 			toast.add({
 				title: "加载 Excel 失败",
 				description: extractErrorMessage(error),
@@ -699,37 +695,37 @@ async function analyzeExcel(sheetName?: string) {
 			});
 		} finally {
 			excelState.isLoading = false;
+		}
 	}
-}
 
-async function convertExcelData() {
-	if (!excelState.analysis || isColumnMappingIncomplete.value) {
+	async function convertExcelData() {
+		if (!excelState.analysis || isColumnMappingIncomplete.value) {
 			toast.add({
 				title: "列映射不完整",
 				description: "请为所有字段选择对应的 Excel 列。",
 				color: "warning"
 			});
 			return;
-	}
-	convertLoading.value = true;
-	try {
-		const selectedSheet = excelState.selectedSheet && excelState.selectedSheet.trim().length > 0
-			? excelState.selectedSheet
-			: undefined;
-		const response = await useTauriCoreInvoke<ConvertResponse>("convert_excel_to_entries", {
-			request: {
-				source: "excel",
-				file_path: excelState.filePath,
-				sheet_name: selectedSheet,
-				header_row_index: excelState.analysis.headerRowIndex,
-				column_mapping: excelState.columnMapping
-			}
-		});
-		handleConvertResponse(response);
-		toast.add({
-			title: "Excel 数据解析成功",
-			description: `有效记录 ${response.entries.length} 条`,
-			color: "success"
+		}
+		convertLoading.value = true;
+		try {
+			const selectedSheet = excelState.selectedSheet && excelState.selectedSheet.trim().length > 0
+				? excelState.selectedSheet
+				: undefined;
+			const response = await useTauriCoreInvoke<ConvertResponse>("convert_excel_to_entries", {
+				request: {
+					source: "excel",
+					file_path: excelState.filePath,
+					sheet_name: selectedSheet,
+					header_row_index: excelState.analysis.headerRowIndex,
+					column_mapping: excelState.columnMapping
+				}
+			});
+			handleConvertResponse(response);
+			toast.add({
+				title: "Excel 数据解析成功",
+				description: `有效记录 ${response.entries.length} 条`,
+				color: "success"
 			});
 		} catch (error) {
 			convertErrors.value = [extractErrorMessage(error)];
@@ -941,5 +937,4 @@ async function convertExcelData() {
 			});
 		}
 	}
-
 </script>
