@@ -4,11 +4,15 @@ export default defineAppConfig({
 	},
 	pageCategories: {
 		tools: {
-			label: "Tools",
+			label: "IP工具",
 			icon: "lucide:wrench"
 		},
+		firewall: {
+			label: "NAT工具",
+			icon: "lucide:shield"
+		},
 		other: {
-			label: "Other",
+			label: "其他",
 			icon: "lucide:folder"
 		}
 	},

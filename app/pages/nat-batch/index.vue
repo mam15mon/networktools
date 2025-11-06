@@ -441,123 +441,18 @@
 						color="info"
 						icon="i-lucide-lightbulb"
 					>
-						弹性 IP 映射启用后，内部地址会优先替换为映射的弹性 IP。请在下方“弹性 IP 管理”中维护映射关系。
+						弹性 IP 映射启用后，内部地址会优先替换为映射的弹性 IP。请在配置页面维护映射与运营商数据。
 					</UAlert>
-				</div>
-			</UCard>
-
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-cloud" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							弹性 IP 管理
-						</h3>
-					</div>
-				</template>
-				<div class="space-y-4">
-					<div class="grid gap-4 md:grid-cols-2">
-						<div class="space-y-2">
-							<label class="text-sm font-semibold text-(--ui-text-muted)">
-								内部 IP
-							</label>
-							<input
-								v-model="newMapping.internalIp"
-								type="text"
-								placeholder="192.168.1.100"
-								class="w-full rounded-md border border-(--ui-border) bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
-							>
-						</div>
-						<div class="space-y-2">
-							<label class="text-sm font-semibold text-(--ui-text-muted)">
-								弹性 IP
-							</label>
-							<input
-								v-model="newMapping.elasticIp"
-								type="text"
-								placeholder="222.240.138.4"
-								class="w-full rounded-md border border-(--ui-border) bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
-							>
-						</div>
-					</div>
-					<div class="flex flex-wrap gap-3">
-						<UButton icon="i-lucide-plus" @click="addElasticMapping">
-							添加/更新映射
-						</UButton>
-						<UButton
-							variant="outline"
-							size="sm"
-							icon="i-lucide-rotate-ccw"
-							@click="loadElasticMappings"
-						>
-							刷新
-						</UButton>
-					</div>
-					<div class="space-y-3">
-						<label class="text-sm font-semibold text-(--ui-text-muted)">
-							批量导入
-						</label>
-						<UTextarea
-							v-model="bulkMappingInput"
-							:rows="4"
-							placeholder="按行输入映射，例如：&#10;192.168.1.100 -> 222.240.138.4&#10;192.168.1.101 -> 222.240.138.5"
-						/>
-						<div class="flex flex-wrap items-center gap-3">
-							<UCheckbox v-model="overwriteExisting" label="覆盖已存在的映射" />
+					<div>
+						<NuxtLink to="/nat-batch/settings">
 							<UButton
-								variant="soft"
+								variant="outline"
 								size="sm"
-								icon="i-lucide-upload"
-								:disabled="!bulkMappingInput.trim()"
-								@click="bulkAddElasticMappings"
+								icon="i-lucide-external-link"
 							>
-								导入
+								打开配置页面
 							</UButton>
-						</div>
-					</div>
-					<div class="overflow-x-auto rounded-md border border-(--ui-border)">
-						<table class="w-full min-w-[480px] text-sm">
-							<thead>
-								<tr class="bg-(--ui-bg-muted)">
-									<th class="px-3 py-2 text-left font-medium">
-										内部 IP
-									</th>
-									<th class="px-3 py-2 text-left font-medium">
-										弹性 IP
-									</th>
-									<th class="px-3 py-2 text-center font-medium">
-										操作
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr
-									v-for="mapping in elasticMappings"
-									:key="`elastic-${mapping.internalIp}`"
-									class="border-t border-(--ui-border)"
-								>
-									<td class="px-3 py-2">
-										{{ mapping.internalIp }}
-									</td>
-									<td class="px-3 py-2">
-										{{ mapping.elasticIp }}
-									</td>
-									<td class="px-3 py-2 text-center">
-										<UButton
-											variant="ghost"
-											size="xs"
-											icon="i-lucide-trash"
-											@click="removeElasticMapping(mapping.internalIp)"
-										/>
-									</td>
-								</tr>
-								<tr v-if="!elasticMappings.length">
-									<td colspan="3" class="px-3 py-4 text-center text-(--ui-text-muted)">
-										暂无映射，请先添加。
-									</td>
-								</tr>
-							</tbody>
-						</table>
+						</NuxtLink>
 					</div>
 				</div>
 			</UCard>
@@ -578,7 +473,14 @@
 						color="warning"
 						icon="i-lucide-alert-circle"
 					>
-						以下内部 IP 未找到弹性 IP 映射：{{ missingElasticIps.join(", ") }}
+						<p>
+							以下内部 IP 未找到弹性 IP 映射：{{ missingElasticIps.join(", ") }}
+						</p>
+						<p class="mt-2">
+							<NuxtLink class="underline" to="/nat-batch/settings">
+								前往配置页面补全映射
+							</NuxtLink>
+						</p>
 					</UAlert>
 					<UTextarea
 						v-model="commandsPreview"
@@ -616,33 +518,6 @@
 				</div>
 			</UCard>
 
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-globe-2" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							运营商 IP 数据
-						</h3>
-					</div>
-				</template>
-				<div class="space-y-4">
-					<div class="flex flex-wrap gap-3">
-						<UButton
-							:loading="ispUpdateLoading"
-							icon="i-lucide-cloud-download"
-							@click="updateIspDatabase"
-						>
-							从 GitHub 更新
-						</UButton>
-						<p v-if="ispSummary" class="text-sm text-(--ui-text-muted)">
-							最近更新：电信 {{ ispSummary.dxCount }} 条，联通 {{ ispSummary.ltCount }} 条，移动 {{ ispSummary.ydCount }} 条，其他 {{ ispSummary.otherCount }} 条
-						</p>
-					</div>
-					<div v-if="ispSummary" class="text-sm text-(--ui-text-muted)">
-						数据保存位置：{{ ispSummary.savedPath }}
-					</div>
-				</div>
-			</UCard>
 		</div>
 	</LayoutTile>
 </template>
@@ -650,13 +525,10 @@
 <script lang="ts" setup>
 	import { computed, reactive, ref, watch } from "vue";
 	import type {
-		BulkElasticResult,
 		ConvertResponse,
 		DeviceType,
-		ElasticMappingEntry,
 		ExcelAnalysis,
 		GenerateNatCommandsResponse,
-		IspUpdateResult,
 		ManualEntryRequest,
 		NatEntry
 	} from "~/types/nat-batch";
@@ -666,7 +538,7 @@
 		name: "NAT 批量生成",
 		icon: "lucide:merge",
 		description: "批量生成 NAT 配置命令",
-		category: "tools"
+		category: "firewall"
 	});
 
 	const requiredFields = ["协议", "主机IP", "内网端口", "外网IP", "外网端口"];
@@ -700,24 +572,16 @@ const excelState = reactive({
 
 const convertLoading = ref(false);
 const generationLoading = ref(false);
-	const convertErrors = ref<string[]>([]);
-	const natEntries = ref<NatEntry[]>([]);
-	const generatedCommands = ref<string[]>([]);
-	const missingElasticIps = ref<string[]>([]);
+const convertErrors = ref<string[]>([]);
+const natEntries = ref<NatEntry[]>([]);
+const generatedCommands = ref<string[]>([]);
+const missingElasticIps = ref<string[]>([]);
 
-	const manualRows = ref<ManualRow[]>([createManualRow()]);
+const manualRows = ref<ManualRow[]>([createManualRow()]);
 
-	const useElasticIp = ref(true);
-	const deviceType = ref<DeviceType>("huawei");
-	const vrrpId = ref("");
-
-	const elasticMappings = ref<ElasticMappingEntry[]>([]);
-	const newMapping = reactive({ internalIp: "", elasticIp: "" });
-	const bulkMappingInput = ref("");
-	const overwriteExisting = ref(false);
-
-	const ispUpdateLoading = ref(false);
-	const ispSummary = ref<IspUpdateResult | null>(null);
+const useElasticIp = ref(true);
+const deviceType = ref<DeviceType>("huawei");
+const vrrpId = ref("");
 
 const excelColumns = computed(() => excelState.analysis?.columns ?? []);
 const previewRows = computed(() => excelState.previewRows.slice(0, 10));
@@ -748,21 +612,17 @@ watch(
 		}
 		void analyzeExcel(sheet);
 	}
-	);
+);
 
-	watch(
-		() => mode.value,
-		() => {
-			convertErrors.value = [];
-			natEntries.value = [];
-			generatedCommands.value = [];
-			missingElasticIps.value = [];
-		}
-	);
-
-	onMounted(() => {
-		void loadElasticMappings();
-	});
+watch(
+	() => mode.value,
+	() => {
+		convertErrors.value = [];
+		natEntries.value = [];
+		generatedCommands.value = [];
+		missingElasticIps.value = [];
+	}
+);
 
 	function createManualRow(): ManualRow {
 		return {
@@ -831,10 +691,10 @@ watch(
 		}
 	}
 
-	async function analyzeExcel(sheetName?: string) {
-		if (!excelState.filePath) return;
-		excelState.isLoading = true;
-		try {
+async function analyzeExcel(sheetName?: string) {
+	if (!excelState.filePath) return;
+	excelState.isLoading = true;
+	try {
 		const targetSheet = sheetName ?? excelState.selectedSheet;
 		const normalizedSheet = targetSheet && targetSheet.trim().length > 0 ? targetSheet : undefined;
 
@@ -848,24 +708,24 @@ watch(
 		excelState.analysis = analysis;
 		shouldIgnoreSheetChange.value = true;
 		excelState.selectedSheet = analysis.selectedSheet;
-			excelState.columnMapping = requiredFields.reduce<Record<string, string>>((acc, field) => {
-				acc[field] = analysis.suggestedMapping[field] ?? "";
-				return acc;
-			}, {});
-			excelState.previewRows = analysis.previewRows;
-			convertErrors.value = [];
-			natEntries.value = [];
-			generatedCommands.value = [];
-			missingElasticIps.value = [];
-			toast.add({
-				title: "Excel 加载成功",
-				description: `检测到 ${analysis.totalRows} 行数据`,
-				color: "success"
-			});
-		} catch (error) {
-			excelState.analysis = null;
-			excelState.previewRows = [];
-			convertErrors.value = [extractErrorMessage(error)];
+		excelState.columnMapping = requiredFields.reduce<Record<string, string>>((acc, field) => {
+			acc[field] = analysis.suggestedMapping[field] ?? "";
+			return acc;
+		}, {});
+		excelState.previewRows = analysis.previewRows;
+		convertErrors.value = [];
+		natEntries.value = [];
+		generatedCommands.value = [];
+		missingElasticIps.value = [];
+		toast.add({
+			title: "Excel 加载成功",
+			description: `检测到 ${analysis.totalRows} 行数据`,
+			color: "success"
+		});
+	} catch (error) {
+		excelState.analysis = null;
+		excelState.previewRows = [];
+		convertErrors.value = [extractErrorMessage(error)];
 			toast.add({
 				title: "加载 Excel 失败",
 				description: extractErrorMessage(error),
@@ -873,37 +733,37 @@ watch(
 			});
 		} finally {
 			excelState.isLoading = false;
-		}
 	}
+}
 
-	async function convertExcelData() {
-		if (!excelState.analysis || isColumnMappingIncomplete.value) {
+async function convertExcelData() {
+	if (!excelState.analysis || isColumnMappingIncomplete.value) {
 			toast.add({
 				title: "列映射不完整",
 				description: "请为所有字段选择对应的 Excel 列。",
 				color: "warning"
 			});
 			return;
-		}
-		convertLoading.value = true;
-		try {
-				const selectedSheet = excelState.selectedSheet && excelState.selectedSheet.trim().length > 0
-					? excelState.selectedSheet
-					: undefined;
-				const response = await useTauriCoreInvoke<ConvertResponse>("convert_excel_to_entries", {
-					request: {
-						source: "excel",
-						file_path: excelState.filePath,
-						sheet_name: selectedSheet,
-						header_row_index: excelState.analysis.headerRowIndex,
-						column_mapping: excelState.columnMapping
-					}
-				});
-			handleConvertResponse(response);
-			toast.add({
-				title: "Excel 数据解析成功",
-				description: `有效记录 ${response.entries.length} 条`,
-				color: "success"
+	}
+	convertLoading.value = true;
+	try {
+		const selectedSheet = excelState.selectedSheet && excelState.selectedSheet.trim().length > 0
+			? excelState.selectedSheet
+			: undefined;
+		const response = await useTauriCoreInvoke<ConvertResponse>("convert_excel_to_entries", {
+			request: {
+				source: "excel",
+				file_path: excelState.filePath,
+				sheet_name: selectedSheet,
+				header_row_index: excelState.analysis.headerRowIndex,
+				column_mapping: excelState.columnMapping
+			}
+		});
+		handleConvertResponse(response);
+		toast.add({
+			title: "Excel 数据解析成功",
+			description: `有效记录 ${response.entries.length} 条`,
+			color: "success"
 			});
 		} catch (error) {
 			convertErrors.value = [extractErrorMessage(error)];
@@ -1019,8 +879,19 @@ watch(
 			const result = await useTauriCoreInvoke<GenerateNatCommandsResponse>("generate_nat_commands", {
 				request: payload
 			});
-			generatedCommands.value = result.commands;
 			missingElasticIps.value = result.missingElasticIps;
+
+			if (useElasticIp.value && result.missingElasticIps.length > 0) {
+				generatedCommands.value = [];
+				toast.add({
+					title: "生成失败",
+					description: `存在 ${result.missingElasticIps.length} 个内部 IP 缺少弹性 IP 映射，请前往配置页面补全。`,
+					color: "warning"
+				});
+				return;
+			}
+
+			generatedCommands.value = result.commands;
 			toast.add({
 				title: "NAT 命令生成完成",
 				description: `共生成 ${result.commands.length} 条命令`,
@@ -1105,140 +976,4 @@ watch(
 		}
 	}
 
-	async function loadElasticMappings() {
-		try {
-			const mappings = await useTauriCoreInvoke<ElasticMappingEntry[]>("get_all_elastic_mappings");
-			elasticMappings.value = mappings;
-		} catch (error) {
-			toast.add({
-				title: "加载映射失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function addElasticMapping() {
-		if (!newMapping.internalIp.trim() || !newMapping.elasticIp.trim()) {
-			toast.add({
-				title: "输入不完整",
-				description: "请填写完整的内部 IP 和弹性 IP。",
-				color: "warning"
-			});
-			return;
-		}
-		try {
-			await useTauriCoreInvoke("add_elastic_ip_mapping", {
-				request: {
-					internalIp: newMapping.internalIp.trim(),
-					elasticIp: newMapping.elasticIp.trim()
-				}
-			});
-			await loadElasticMappings();
-			newMapping.internalIp = "";
-			newMapping.elasticIp = "";
-			toast.add({
-				title: "映射保存成功",
-				color: "success"
-			});
-		} catch (error) {
-			toast.add({
-				title: "保存映射失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function removeElasticMapping(internalIp: string) {
-		try {
-			await useTauriCoreInvoke("remove_elastic_ip_mapping", { internal_ip: internalIp });
-			await loadElasticMappings();
-			toast.add({
-				title: "映射已删除",
-				color: "success"
-			});
-		} catch (error) {
-			toast.add({
-				title: "删除失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function bulkAddElasticMappings() {
-		const entries = bulkMappingInput.value
-			.split("\n")
-			.map((line) => line.trim())
-			.filter(Boolean)
-			.map((line) => {
-				const [left, right] = line.split("->").map((part) => part.trim());
-				return left && right
-					? { internalIp: left, elasticIp: right }
-					: null;
-			})
-			.filter((entry): entry is { internalIp: string, elasticIp: string } => Boolean(entry));
-
-		if (!entries.length) {
-			toast.add({
-				title: "无有效映射",
-				description: "请按“内部IP -> 弹性IP”的格式填写映射。",
-				color: "warning"
-			});
-			return;
-		}
-
-		try {
-			const result = await useTauriCoreInvoke<BulkElasticResult>("bulk_add_elastic_ip_mappings", {
-				request: {
-					entries,
-					overwriteExisting: overwriteExisting.value
-				}
-			});
-			await loadElasticMappings();
-			bulkMappingInput.value = "";
-			toast.add({
-				title: "批量导入完成",
-				description: `新增 ${result.added} 条，更新 ${result.updated} 条，跳过 ${result.skipped} 条。`,
-				color: "success"
-			});
-		} catch (error) {
-			toast.add({
-				title: "批量导入失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function updateIspDatabase() {
-		ispUpdateLoading.value = true;
-		try {
-			const summary = await useTauriCoreInvoke<IspUpdateResult>("update_isp_from_github");
-			ispSummary.value = summary;
-			toast.add({
-				title: "运营商数据更新成功",
-				description: `总计 ${summary.total} 条记录`,
-				color: "success"
-			});
-		} catch (error) {
-			toast.add({
-				title: "更新失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		} finally {
-			ispUpdateLoading.value = false;
-		}
-	}
-
-	function extractErrorMessage(error: unknown): string {
-		if (typeof error === "string") return error;
-		if (error instanceof Error) return error.message;
-		if (error && typeof error === "object" && "message" in error && typeof (error as any).message === "string") {
-			return (error as any).message;
-		}
-		return "发生未知错误";
-	}
 </script>
