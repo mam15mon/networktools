@@ -196,7 +196,8 @@ definePageMeta({
 	name: "弹性 IP 与运营商配置",
 	icon: "lucide:cloud",
 	description: "管理弹性 IP 映射和运营商数据",
-	category: "firewall"
+	category: "firewall",
+	hidden: true
 });
 
 const toast = useToast();

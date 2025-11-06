@@ -7,6 +7,9 @@ export const usePages = () => {
 		const routes = router.getRoutes().filter((route) => route.name !== "index" && route.name !== "all");
 
 		const categorizedRoutes = routes.reduce((acc, route) => {
+			// 跳过隐藏的页面
+			if (route.meta.hidden) return acc;
+
 			const category = route.meta.category as string || "other";
 			if (!category) return acc;
 
