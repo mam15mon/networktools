@@ -80,21 +80,13 @@
 										<label class="text-xs font-semibold text-(--ui-text-muted)">
 											{{ field }}
 										</label>
-										<select
+										<USelect
 											v-model="excelState.columnMapping[field]"
-											class="select-base"
-										>
-											<option value="">
-												未选择
-											</option>
-											<option
-												v-for="column in excelColumns"
-												:key="column || `col-${field}`"
-												:value="column"
-											>
-												{{ column || "(空列)" }}
-											</option>
-										</select>
+											:items="[{ label: '未选择', value: '' }, ...excelColumns.map(col => ({ label: col || '(空列)', value: col }))]"
+											placeholder="未选择"
+											class="w-full"
+											size="sm"
+										/>
 									</div>
 								</div>
 							</div>
@@ -206,23 +198,13 @@
 								<tbody>
 									<tr v-for="(row, index) in manualRows" :key="`manual-${index}`" class="border-t border-(--ui-border)">
 										<td class="px-3 py-2 align-top">
-											<select
+											<USelect
 												v-model="row.protocol"
-												class="select-compact"
-											>
-												<option value="TCP">
-													TCP
-												</option>
-												<option value="UDP">
-													UDP
-												</option>
-												<option value="ICMP">
-													ICMP
-												</option>
-												<option value="ANY">
-													ANY
-												</option>
-											</select>
+												:items="['TCP', 'UDP', 'ICMP', 'ANY']"
+												placeholder="选择协议"
+												size="sm"
+												class="w-full"
+											/>
 										</td>
 										<td class="px-3 py-2 align-top">
 											<input
