@@ -524,7 +524,7 @@ fn validate_rows(rows: Vec<RawNatRow>) -> ConvertResponse {
         let protocol_upper = row.protocol.trim().to_uppercase();
         if protocol_upper.is_empty() {
             row_errors.push("协议不能为空".to_string());
-        } else if !matches!(protocol_upper.as_str(), "TCP" | "UDP" | "ANY") {
+        } else if !matches!(protocol_upper.as_str(), "TCP" | "UDP" | "ICMP" | "ANY") {
             row_errors.push(format!("无效的协议类型: {}", row.protocol.trim()));
         }
 
@@ -551,7 +551,7 @@ fn validate_rows(rows: Vec<RawNatRow>) -> ConvertResponse {
             }
         }
 
-        let (internal_range, public_range, is_port_range) = if protocol_upper == "ANY" {
+        let (internal_range, public_range, is_port_range) = if protocol_upper == "ANY" || protocol_upper == "ICMP" {
             (None, None, false)
         } else {
             let internal_port_value = match &row.internal_port {
@@ -765,13 +765,17 @@ fn build_h3c_command(
     public_ip: &str,
     isp_prefix: &str,
     elastic_ip: Option<&str>,
-    vrrp_id: u16,
+    vrrp_id: Option<u16>,
 ) -> Option<String> {
     let inside_ip = elastic_ip.unwrap_or(&entry.internal_ip);
     if entry.protocol == "ANY" {
         let description = format!("{isp_prefix}{}{}", entry.protocol, entry.internal_ip);
+        let vrrp_part = match vrrp_id {
+            Some(id) => format!(" vrrp {id}"),
+            None => String::new(),
+        };
         Some(format!(
-            "nat server global {public_ip} inside {inside_ip} vrrp {vrrp_id} description {description}"
+            "nat server global {public_ip} inside {inside_ip}{vrrp_part} description {description}"
         ))
     } else {
         let protocol_lower = entry.protocol.to_lowercase();
@@ -788,13 +792,18 @@ fn build_h3c_command(
                 .unwrap_or(entry.public_port_start.unwrap()),
         );
 
+        let vrrp_part = match vrrp_id {
+            Some(id) => format!(" vrrp {id}"),
+            None => String::new(),
+        };
+
         if internal_start == internal_end {
             let description = format!(
                 "{isp_prefix}{}{}:{}",
                 entry.protocol, entry.internal_ip, internal_start
             );
             Some(format!(
-                "nat server protocol {protocol_lower} global {public_ip} {public_start} inside {inside_ip} {internal_start} vrrp {vrrp_id} description {description}"
+                "nat server protocol {protocol_lower} global {public_ip} {public_start} inside {inside_ip} {internal_start}{vrrp_part} description {description}"
             ))
         } else {
             let description = format!(
@@ -802,7 +811,7 @@ fn build_h3c_command(
                 entry.protocol, entry.internal_ip, internal_start, internal_end
             );
             Some(format!(
-                "nat server protocol {protocol_lower} global {public_ip} {public_start} {public_end} inside {inside_ip} {internal_start} {internal_end} vrrp {vrrp_id} description {description}"
+                "nat server protocol {protocol_lower} global {public_ip} {public_start} {public_end} inside {inside_ip} {internal_start} {internal_end}{vrrp_part} description {description}"
             ))
         }
     }
@@ -818,10 +827,7 @@ pub fn generate_nat_commands(
     let mut commands = Vec::new();
     let mut missing_elastic = HashSet::new();
 
-    if matches!(request.device_type, DeviceType::H3c) && request.vrrp_id.is_none() {
-        return Err("H3C 设备必须指定 VRRP ID".to_string());
-    }
-    let vrrp_id = request.vrrp_id.unwrap_or_default();
+    let vrrp_id = request.vrrp_id;
 
     for entry in request.entries {
         let elastic_ip = if request.use_elastic_ip {

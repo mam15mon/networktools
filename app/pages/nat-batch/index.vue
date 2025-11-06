@@ -218,6 +218,9 @@
 												<option value="UDP">
 													UDP
 												</option>
+												<option value="ICMP">
+													ICMP
+												</option>
 												<option value="ANY">
 													ANY
 												</option>
@@ -235,7 +238,7 @@
 											<input
 												v-model="row.internalPort"
 												:type="row.protocol === 'ANY' ? 'text' : 'text'"
-												:disabled="row.protocol === 'ANY'"
+												:disabled="row.protocol === 'ANY' || row.protocol === 'ICMP'"
 												placeholder="80 或 8000-8010"
 												class="w-full rounded-md border border-(--ui-border) bg-transparent px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
 											>
@@ -252,7 +255,7 @@
 											<input
 												v-model="row.publicPort"
 												:type="row.protocol === 'ANY' ? 'text' : 'text'"
-												:disabled="row.protocol === 'ANY'"
+												:disabled="row.protocol === 'ANY' || row.protocol === 'ICMP'"
 												placeholder="80 或 8000-8010"
 												class="w-full rounded-md border border-(--ui-border) bg-transparent px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
 											>
@@ -271,7 +274,7 @@
 							</table>
 						</div>
 						<p class="text-sm text-(--ui-text-muted)">
-							提示：协议为 ANY 时无需填写端口；支持端口范围（例如 8000-8010），多个公网 IP 请使用换行。
+							提示：协议为 ANY 或 ICMP 时无需填写端口；支持端口范围（例如 8000-8010），多个公网 IP 请使用换行。
 						</p>
 						<div class="flex flex-wrap gap-3">
 							<UButton
