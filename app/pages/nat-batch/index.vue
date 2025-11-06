@@ -270,13 +270,9 @@
 								</tbody>
 							</table>
 						</div>
-						<UAlert
-							variant="soft"
-							color="primary"
-							icon="i-lucide-info"
-						>
-							协议为 ANY 时无需填写端口；支持端口范围（例如 8000-8010），多个公网 IP 请使用换行。
-						</UAlert>
+						<p class="text-sm text-(--ui-text-muted)">
+							提示：协议为 ANY 时无需填写端口；支持端口范围（例如 8000-8010），多个公网 IP 请使用换行。
+						</p>
 						<div class="flex flex-wrap gap-3">
 							<UButton
 								:loading="convertLoading"
@@ -300,23 +296,19 @@
 					</div>
 				</template>
 				<div class="space-y-4">
-					<UAlert
+					<div
 						v-if="convertErrors.length"
-						variant="soft"
-						color="warning"
-						icon="i-lucide-alert-triangle"
+						class="rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800"
 					>
-						<div class="space-y-1">
-							<p class="font-medium">
-								检测到 {{ convertErrors.length }} 条告警：
-							</p>
-							<ul class="list-disc pl-5 space-y-1">
-								<li v-for="(error, index) in convertErrors" :key="`convert-error-${index}`">
-									{{ error }}
-								</li>
-							</ul>
-						</div>
-					</UAlert>
+						<p class="font-medium">
+							检测到 {{ convertErrors.length }} 条告警：
+						</p>
+						<ul class="list-disc pl-5 space-y-1">
+							<li v-for="(error, index) in convertErrors" :key="`convert-error-${index}`">
+								{{ error }}
+							</li>
+						</ul>
+					</div>
 
 					<div v-if="natEntries.length" class="space-y-3">
 						<div class="flex flex-wrap items-center justify-between gap-3">
@@ -348,7 +340,10 @@
 											协议
 										</th>
 										<th class="px-3 py-2 text-left font-medium">
-											内部地址/端口
+											内部地址
+										</th>
+										<th class="px-3 py-2 text-left font-medium">
+											端口
 										</th>
 										<th class="px-3 py-2 text-left font-medium">
 											公网地址
@@ -367,11 +362,11 @@
 											{{ entry.protocol }}
 										</td>
 										<td class="px-3 py-2 align-top">
-											<div class="space-y-1">
-												<p>{{ entry.internalIp }}</p>
-												<p v-if="entry.internalPortStart !== null">
-													端口：{{ formatPortRange(entry.internalPortStart, entry.internalPortEnd) }}
-												</p>
+											{{ entry.internalIp }}
+										</td>
+										<td class="px-3 py-2 align-top">
+											<div v-if="entry.internalPortStart !== null">
+												{{ formatPortRange(entry.internalPortStart, entry.internalPortEnd) }}
 											</div>
 										</td>
 										<td class="px-3 py-2 align-top">
@@ -436,13 +431,6 @@
 							class="w-full rounded-md border border-(--ui-border) bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--ui-primary)"
 						>
 					</div>
-					<UAlert
-						variant="soft"
-						color="info"
-						icon="i-lucide-lightbulb"
-					>
-						弹性 IP 映射启用后，内部地址会优先替换为映射的弹性 IP。请在配置页面维护映射与运营商数据。
-					</UAlert>
 					<div>
 						<NuxtLink to="/nat-batch/settings">
 							<UButton
@@ -467,11 +455,9 @@
 					</div>
 				</template>
 				<div class="space-y-4">
-					<UAlert
+					<div
 						v-if="missingElasticIps.length"
-						variant="soft"
-						color="warning"
-						icon="i-lucide-alert-circle"
+						class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
 					>
 						<p>
 							以下内部 IP 未找到弹性 IP 映射：{{ missingElasticIps.join(", ") }}
@@ -481,7 +467,7 @@
 								前往配置页面补全映射
 							</NuxtLink>
 						</p>
-					</UAlert>
+					</div>
 					<UTextarea
 						v-model="commandsPreview"
 						:rows="12"
@@ -719,9 +705,10 @@ async function analyzeExcel(sheetName?: string) {
 		missingElasticIps.value = [];
 		toast.add({
 			title: "Excel 加载成功",
-			description: `检测到 ${analysis.totalRows} 行数据`,
+			description: `检测到 ${analysis.totalRows} 行数据，正在自动解析`,
 			color: "success"
 		});
+		await convertExcelData();
 	} catch (error) {
 		excelState.analysis = null;
 		excelState.previewRows = [];
