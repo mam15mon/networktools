@@ -34,9 +34,9 @@
 
 			<div v-if="result" class="space-y-8">
 				<section class="space-y-3">
-					<h3 class="text-xl font-semibold">
+					<UHeading :level="3" size="xl" class="font-semibold">
 						输入概览
-					</h3>
+					</UHeading>
 					<p class="text-sm text-(--ui-text-muted)">
 						共解析 {{ result.normalizedInputs.length }} 条有效条目。
 					</p>
@@ -48,9 +48,9 @@
 				</section>
 
 				<section class="space-y-3">
-					<h3 class="text-xl font-semibold">
+					<UHeading :level="3" size="xl" class="font-semibold">
 						精确汇总
-					</h3>
+					</UHeading>
 					<p class="text-sm text-(--ui-text-muted)">
 						精确覆盖原始网段的最小 CIDR 集合。
 					</p>
@@ -62,9 +62,9 @@
 				</section>
 
 				<section class="space-y-3">
-					<h3 class="text-xl font-semibold">
+					<UHeading :level="3" size="xl" class="font-semibold">
 						非精确汇总
-					</h3>
+					</UHeading>
 					<p class="text-sm text-(--ui-text-muted)">
 						最小覆盖所有输入的单个 CIDR，可能包含额外地址。显示总地址数、输入地址数、额外地址数及其百分比。
 					</p>
@@ -76,9 +76,9 @@
 				</section>
 
 				<section v-if="result.errors.length" class="space-y-3">
-					<h3 class="text-xl font-semibold text-(--ui-destructive)">
+					<UHeading :level="3" size="xl" class="font-semibold text-(--ui-destructive)">
 						解析失败
-					</h3>
+					</UHeading>
 					<UAlert variant="danger" icon="i-lucide-octagon-alert">
 						<ul class="list-disc pl-4 space-y-1">
 							<li v-for="item in result.errors" :key="item">
@@ -171,20 +171,28 @@
 		return result.value.preciseSummary.map((cidr) => ({ cidr }));
 	});
 
-	const approxRows = computed(() => {
-		if (!result.value) return [];
+const formatPercentage = (value: number) => {
+	if (value === 0) return "0%";
+	if (value < 0.01) {
+		return `${value.toFixed(4)}%`;
+	}
+	return `${value.toFixed(2)}%`;
+};
 
-		// 如果有新的非精确汇总数据，使用它
-		if (result.value.nonPreciseSummary) {
-			const summary = result.value.nonPreciseSummary;
-			return [{
-				cidr: summary.cidr,
-				totalAddresses: summary.totalAddresses.toLocaleString(),
-				inputAddresses: summary.inputAddresses.toLocaleString(),
-				extraAddresses: summary.extraAddresses.toLocaleString(),
-				extraPercentage: `${summary.extraPercentage.toFixed(2)}%`
-			}];
-		}
+const approxRows = computed(() => {
+	if (!result.value) return [];
+
+	// 如果有新的非精确汇总数据，使用它
+	if (result.value.nonPreciseSummary) {
+		const summary = result.value.nonPreciseSummary;
+		return [{
+			cidr: summary.cidr,
+			totalAddresses: summary.totalAddresses.toLocaleString(),
+			inputAddresses: summary.inputAddresses.toLocaleString(),
+			extraAddresses: summary.extraAddresses.toLocaleString(),
+			extraPercentage: formatPercentage(summary.extraPercentage)
+		}];
+	}
 
 		// 否则回退到旧的简单显示
 		return [{ cidr: result.value.approximateSummary }];

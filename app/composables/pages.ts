@@ -36,7 +36,14 @@ export const usePages = () => {
 			return acc;
 		}, {} as Record<string, any>);
 
-		return Object.values(categorizedRoutes);
+		const preferredOrder = ["tools", "firewall", "other"];
+		const ordered = preferredOrder
+			.map((key) => categorizedRoutes[key])
+			.filter(Boolean);
+		const remaining = Object.entries(categorizedRoutes)
+			.filter(([key]) => !preferredOrder.includes(key))
+			.map(([, value]) => value);
+		return [...ordered, ...remaining];
 	});
 
 	return {

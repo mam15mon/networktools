@@ -4,23 +4,23 @@
 		description="基于 Excel 模板批量生成 VSR 配置脚本，支持本地、LDAP、Radius 可选段落。"
 	>
 		<div class="space-y-8">
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-shield-check" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							认证策略
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-shield-check" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						认证策略
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-4">
 					<div class="flex flex-wrap items-center gap-3">
 						<UCheckbox v-model="enableLocalAuth" label="启用本地认证 (PPP/管理员/监控)" />
 					</div>
-					<div class="space-y-2">
-						<label class="text-sm font-semibold text-(--ui-text-muted)">
-							LDAP / Radius 二选一
-						</label>
+				<div class="space-y-2">
+					<p class="text-sm font-semibold text-(--ui-text-muted)">
+						LDAP / Radius 二选一
+					</p>
 						<URadioGroup
 							v-model="remoteAuth"
 							:items="remoteAuthOptions"
@@ -35,14 +35,14 @@
 				</div>
 			</UCard>
 
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-file-spreadsheet" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							Excel 数据
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-file-spreadsheet" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						Excel 数据
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-6">
 					<div class="space-y-3">
@@ -61,70 +61,12 @@
 						</div>
 					</div>
 
-					<div v-if="excelState.analysis" class="space-y-4">
-						<div class="grid gap-4 md:grid-cols-[220px_1fr] items-center">
-							<label class="text-sm font-medium text-(--ui-text-muted)">
-								工作表
-							</label>
-							<USelect
-								v-model="excelState.selectedSheet"
-								:options="excelState.analysis.sheetNames"
-								placeholder="选择工作表"
-								class="w-full"
-							/>
-						</div>
-
-						<div class="space-y-3">
-							<div class="flex flex-wrap items-center justify-between gap-3">
-								<h4 class="text-base font-semibold">
-									列映射
-								</h4>
-								<UButton
-									variant="soft"
-									size="sm"
-									icon="i-lucide-refresh-cw"
-									@click="resetColumnMapping"
-								>
-									重置为推荐
-								</UButton>
-							</div>
-							<div class="flex flex-wrap gap-4">
-								<div
-									v-for="field in fieldDefinitions"
-									:key="field.key"
-									class="flex flex-col gap-2 min-w-[200px] flex-1"
-								>
-									<div class="flex items-center justify-between gap-2">
-										<span class="text-xs font-semibold text-(--ui-text-muted)">
-											{{ field.label }}
-											<span v-if="field.required" class="text-red-500">*</span>
-										</span>
-										<div v-if="isFieldMapped(field.key)" class="flex items-center gap-1 text-xs text-green-600">
-											<Icon name="i-lucide-check" class="size-3" />
-											<span>已映射</span>
-										</div>
-										<div v-else class="flex items-center gap-1 text-xs text-gray-400">
-											<Icon name="i-lucide-circle" class="size-3" />
-											<span>未映射</span>
-										</div>
-									</div>
-									<USelect
-										v-model="excelState.columnMapping[field.key]"
-										:items="columnOptions"
-										placeholder="选择 Excel 列"
-										class="w-full"
-										size="sm"
-										:popper="{ strategy: 'fixed', placement: 'bottom-start' }"
-									/>
-								</div>
-							</div>
-						</div>
-
-						<div class="space-y-2">
-							<div class="flex items-center justify-between">
-								<h4 class="text-base font-semibold">
-									数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
-								</h4>
+				<div v-if="excelState.analysis" class="space-y-4">
+				<div class="space-y-2">
+					<div class="flex items-center justify-between">
+						<UHeading :level="4" size="md" class="font-semibold">
+							数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
+						</UHeading>
 							</div>
 							<UTable
 								:columns="excelPreviewColumns"
@@ -134,25 +76,17 @@
 						</div>
 					</div>
 
-					<div class="flex flex-wrap gap-3">
-						<UButton
-							:disabled="!excelState.analysis || isColumnMappingIncomplete"
-							:loading="convertLoading"
-							icon="i-lucide-check"
-							@click="convertExcelData"
-						>
-							解析 Excel 数据
-						</UButton>
-						<UButton
-							variant="outline"
-							size="sm"
-							:disabled="!excelState.analysis"
-							icon="i-lucide-eraser"
-							@click="clearExcelContext"
-						>
-							清除已加载数据
-						</UButton>
-					</div>
+				<div class="flex flex-wrap gap-3">
+					<UButton
+						variant="outline"
+						size="sm"
+						:disabled="!excelState.analysis"
+						icon="i-lucide-eraser"
+						@click="clearExcelContext"
+					>
+						清除已加载数据
+					</UButton>
+				</div>
 				</div>
 			</UCard>
 
@@ -160,25 +94,24 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-table" class="size-5" />
-						<h3 class="text-lg font-semibold">
+						<UHeading :level="3" size="lg" class="font-semibold">
 							数据校验结果
-						</h3>
+						</UHeading>
 					</div>
 				</template>
 				<div class="space-y-4">
-					<div
-						v-if="convertErrors.length"
-						class="rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800"
-					>
-						<p class="font-medium">
-							检测到 {{ convertErrors.length }} 条告警：
-						</p>
-						<ul class="list-disc pl-5 space-y-1">
-							<li v-for="(error, index) in convertErrors" :key="`vsr-convert-error-${index}`">
-								{{ error }}
-							</li>
-						</ul>
-					</div>
+				<UAlert
+					v-if="convertErrors.length"
+					variant="warning"
+					icon="i-lucide-alert-triangle"
+					:title="`检测到 ${convertErrors.length} 条告警：`"
+				>
+					<ul class="list-disc pl-5 space-y-1">
+						<li v-for="(error, index) in convertErrors" :key="`vsr-convert-error-${index}`">
+							{{ error }}
+						</li>
+					</ul>
+				</UAlert>
 
 					<div v-if="vsrEntries.length" class="space-y-3">
 						<div class="flex flex-wrap items-center justify-between gap-3">
@@ -190,14 +123,9 @@
 									预览前 {{ Math.min(vsrEntries.length, 10) }} 条，生成配置时会全部使用。
 								</p>
 							</div>
-							<UButton
-								variant="outline"
-								size="sm"
-								icon="i-lucide-refresh-cw"
-								@click="regeneratePreview"
-							>
-								刷新预览
-							</UButton>
+							<div class="text-sm text-(--ui-text-muted)">
+								上传完成后自动生成配置，可直接下载。
+							</div>
 						</div>
 						<UTable
 							:columns="entryPreviewColumns"
@@ -208,29 +136,22 @@
 				</div>
 			</UCard>
 
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-terminal" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							配置输出
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-terminal" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						配置输出
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-4">
 					<div class="flex flex-wrap gap-3">
 						<UButton
-							icon="i-lucide-cpu"
-							:loading="generationLoading"
-							:disabled="!vsrEntries.length"
-							@click="generateConfigs"
-						>
-							生成配置
-						</UButton>
-						<UButton
 							variant="outline"
 							icon="i-lucide-save"
-							:disabled="!generatedConfigs.length"
+							:loading="convertLoading || generationLoading"
+							:disabled="!generatedConfigs.length || convertLoading || generationLoading"
 							@click="exportConfigs"
 						>
 							导出为 Excel
@@ -263,30 +184,6 @@ import LayoutTile from "~/components/Layout/Tile.vue";
 import type { ConvertResponse, ExcelAnalysis, VsrEntry, VsrGeneratedConfig } from "~/types/vsr-batch";
 import { extractErrorMessage } from "~/utils/error";
 
-const fieldDefinitions = [
-	{ key: "device_name", label: "设备名称", required: true },
-	{ key: "ip", label: "设备 IP", required: true },
-	{ key: "gateway", label: "网关", required: true },
-	{ key: "pool_cidr", label: "地址池 CIDR", required: true },
-	{ key: "vsr_username", label: "管理员账号", required: false },
-	{ key: "vsr_password", label: "管理员密码", required: false },
-	{ key: "monitor_username", label: "监控账号", required: false },
-	{ key: "monitor_password", label: "监控密码", required: false },
-	{ key: "ppp_username", label: "PPP 用户", required: false },
-	{ key: "ppp_password", label: "PPP 密码", required: false },
-	{ key: "start_ip", label: "地址池起始 IP", required: false },
-	{ key: "end_ip", label: "地址池结束 IP", required: false },
-	{ key: "pool_ip_gateway", label: "地址池网关", required: false },
-	{ key: "ldap_server_ip", label: "LDAP 服务器", required: false },
-	{ key: "ldap_login_dn", label: "LDAP Login DN", required: false },
-	{ key: "ldap_search_base_dn", label: "LDAP Search Base DN", required: false },
-	{ key: "ldap_password", label: "LDAP 密码", required: false },
-	{ key: "radius_ip", label: "Radius 服务器", required: false },
-	{ key: "radius_password", label: "Radius 密码", required: false }
-] as const;
-
-const UNMAPPED_VALUE = "__unmapped__";
-
 const toast = useToast();
 
 const enableLocalAuth = ref(true);
@@ -303,14 +200,17 @@ watch(enableLocalAuth, (value) => {
 	}
 });
 
+watch([enableLocalAuth, remoteAuth], () => {
+	if (!vsrEntries.value.length) {
+		return;
+	}
+	void generateConfigs({ silentSuccess: true, silentEmpty: true });
+});
+
 const excelState = reactive({
 	filePath: "",
 	analysis: null as ExcelAnalysis | null,
 	selectedSheet: "",
-	columnMapping: fieldDefinitions.reduce<Record<string, string>>((acc, field) => {
-		acc[field.key] = UNMAPPED_VALUE;
-		return acc;
-	}, {}),
 	previewRows: [] as string[][],
 	isLoading: false
 });
@@ -320,14 +220,10 @@ const generationLoading = ref(false);
 const convertErrors = ref<string[]>([]);
 const vsrEntries = ref<VsrEntry[]>([]);
 const generatedConfigs = ref<VsrGeneratedConfig[]>([]);
+let generationTask: Promise<boolean> | null = null;
 
 const excelColumns = computed(() => excelState.analysis?.columns ?? []);
 const previewRows = computed(() => excelState.previewRows.slice(0, 10));
-
-const columnOptions = computed(() => [
-	{ label: "未选择", value: UNMAPPED_VALUE },
-	...excelColumns.value.map((col) => ({ label: col || "(空列)", value: col || UNMAPPED_VALUE }))
-]);
 
 const excelPreviewColumns = computed(() =>
 	excelColumns.value.map((column, index) => ({
@@ -347,15 +243,6 @@ const excelPreviewRows = computed(() => {
 	});
 });
 
-const isColumnMappingIncomplete = computed(() =>
-	fieldDefinitions
-		.filter((field) => field.required)
-		.some((field) => {
-			const value = excelState.columnMapping[field.key];
-			return !value || value === UNMAPPED_VALUE;
-		})
-);
-
 const entryPreviewColumns = [
 	{ id: "deviceName", header: "设备", accessorKey: "deviceName" },
 	{ id: "ip", header: "IP", accessorKey: "ip" },
@@ -373,19 +260,6 @@ const configPreviewColumns = [
 ];
 
 const configPreviewRows = computed(() => generatedConfigs.value.slice(0, 5));
-
-watch(
-	() => excelState.selectedSheet,
-	(sheet, prev) => {
-		if (!excelState.analysis || !excelState.filePath || sheet === prev || !sheet) return;
-		void analyzeExcel(sheet);
-	}
-);
-
-function isFieldMapped(key: string) {
-	const value = excelState.columnMapping[key];
-	return Boolean(value && value !== UNMAPPED_VALUE);
-}
 
 async function handleSelectExcel() {
 	try {
@@ -421,20 +295,12 @@ async function analyzeExcel(sheetName?: string) {
 
 		excelState.analysis = analysis;
 		excelState.selectedSheet = analysis.selectedSheet;
-		excelState.columnMapping = fieldDefinitions.reduce<Record<string, string>>((acc, field) => {
-			acc[field.key] = analysis.suggestedMapping[field.key] ?? UNMAPPED_VALUE;
-			return acc;
-		}, {});
 		excelState.previewRows = analysis.previewRows;
 		vsrEntries.value = [];
 		generatedConfigs.value = [];
 		convertErrors.value = [];
 
-		toast.add({
-			title: "Excel 加载成功",
-			description: `检测到 ${analysis.totalRows} 行数据，完成自动解析`,
-			color: "success"
-		});
+		await runAutoPipeline();
 	} catch (error) {
 		excelState.analysis = null;
 		excelState.previewRows = [];
@@ -449,14 +315,17 @@ async function analyzeExcel(sheetName?: string) {
 	}
 }
 
-async function convertExcelData() {
-	if (!excelState.analysis || isColumnMappingIncomplete.value) {
-		toast.add({
-			title: "列映射不完整",
-			description: "请为所有必填字段选择对应的列。",
-			color: "warning"
-		});
+async function runAutoPipeline() {
+	const convertOk = await convertExcelData();
+	if (!convertOk || !vsrEntries.value.length) {
 		return;
+	}
+	await generateConfigs({ silentSuccess: true, silentEmpty: true });
+}
+
+async function convertExcelData(options: { silentSuccess?: boolean } = {}): Promise<boolean> {
+	if (!excelState.analysis) {
+		return false;
 	}
 
 	convertLoading.value = true;
@@ -464,19 +333,12 @@ async function convertExcelData() {
 		const selectedSheet = excelState.selectedSheet && excelState.selectedSheet.trim().length > 0
 			? excelState.selectedSheet
 			: undefined;
-		const normalizedMapping = Object.fromEntries(
-			fieldDefinitions.map((field) => [
-				field.key,
-				excelState.columnMapping[field.key] === UNMAPPED_VALUE ? "" : excelState.columnMapping[field.key]
-			])
-		);
 
 		const response = await useTauriCoreInvoke<ConvertResponse>("convert_vsr_entries", {
 			request: {
 				filePath: excelState.filePath,
 				sheetName: selectedSheet,
-				headerRowIndex: excelState.analysis.headerRowIndex,
-				columnMapping: normalizedMapping
+				headerRowIndex: excelState.analysis.headerRowIndex
 			}
 		});
 
@@ -484,19 +346,24 @@ async function convertExcelData() {
 		convertErrors.value = response.errors;
 		generatedConfigs.value = [];
 
-		toast.add({
-			title: "Excel 数据解析成功",
-			description: `有效记录 ${response.entries.length} 条`,
-			color: "success"
-		});
+		if (!options.silentSuccess) {
+			toast.add({
+				title: "Excel 数据解析成功",
+				description: `有效记录 ${response.entries.length} 条`,
+				color: "success"
+			});
+		}
+		return true;
 	} catch (error) {
 		convertErrors.value = [extractErrorMessage(error)];
 		vsrEntries.value = [];
+		generatedConfigs.value = [];
 		toast.add({
 			title: "解析失败",
 			description: extractErrorMessage(error),
 			color: "error"
 		});
+		return false;
 	} finally {
 		convertLoading.value = false;
 	}
@@ -506,63 +373,66 @@ function clearExcelContext() {
 	excelState.analysis = null;
 	excelState.filePath = "";
 	excelState.selectedSheet = "";
-	excelState.columnMapping = fieldDefinitions.reduce<Record<string, string>>((acc, field) => {
-		acc[field.key] = UNMAPPED_VALUE;
-		return acc;
-	}, {});
 	excelState.previewRows = [];
 	vsrEntries.value = [];
 	generatedConfigs.value = [];
 	convertErrors.value = [];
 }
 
-function resetColumnMapping() {
-	if (!excelState.analysis) return;
-	excelState.columnMapping = fieldDefinitions.reduce<Record<string, string>>((acc, field) => {
-		acc[field.key] = excelState.analysis?.suggestedMapping[field.key] ?? UNMAPPED_VALUE;
-		return acc;
-	}, {});
-}
-
-function regeneratePreview() {
-	vsrEntries.value = [...vsrEntries.value];
-}
-
-async function generateConfigs() {
+async function generateConfigs(options: { silentSuccess?: boolean; silentEmpty?: boolean } = {}): Promise<boolean> {
 	if (!vsrEntries.value.length) {
-		toast.add({
-			title: "无可生成的数据",
-			description: "请先解析 Excel 数据。",
-			color: "warning"
-		});
-		return;
+		if (!options.silentEmpty) {
+			toast.add({
+				title: "无可生成的数据",
+				description: "请先解析 Excel 数据。",
+				color: "warning"
+			});
+		}
+		return false;
+	}
+
+	if (generationTask) {
+		await generationTask;
 	}
 
 	generationLoading.value = true;
-	try {
-		const configs = await useTauriCoreInvoke<VsrGeneratedConfig[]>("generate_vsr_configs", {
-			request: {
-				entries: vsrEntries.value,
-				includeLocal: enableLocalAuth.value,
-				includeLdap: remoteAuth.value === "ldap",
-				includeRadius: remoteAuth.value === "radius"
+	const task = (async () => {
+		try {
+			const configs = await useTauriCoreInvoke<VsrGeneratedConfig[]>("generate_vsr_configs", {
+				request: {
+					entries: vsrEntries.value,
+					includeLocal: enableLocalAuth.value,
+					includeLdap: remoteAuth.value === "ldap",
+					includeRadius: remoteAuth.value === "radius"
+				}
+			});
+			generatedConfigs.value = configs;
+			if (!options.silentSuccess) {
+				toast.add({
+					title: "配置生成完成",
+					description: `共生成 ${configs.length} 台设备配置`,
+					color: "success"
+				});
 			}
-		});
-		generatedConfigs.value = configs;
-		toast.add({
-			title: "配置生成完成",
-			description: `共生成 ${configs.length} 台设备配置`,
-			color: "success"
-		});
-	} catch (error) {
-		toast.add({
-			title: "生成失败",
-			description: extractErrorMessage(error),
-			color: "error"
-		});
-	} finally {
-		generationLoading.value = false;
+			return true;
+		} catch (error) {
+			toast.add({
+				title: "生成失败",
+				description: extractErrorMessage(error),
+				color: "error"
+			});
+			return false;
+		} finally {
+			generationLoading.value = false;
+		}
+	})();
+
+	generationTask = task;
+	const result = await task;
+	if (generationTask === task) {
+		generationTask = null;
 	}
+	return result;
 }
 
 async function exportConfigs() {
@@ -626,6 +496,6 @@ definePageMeta({
 	name: "VSR 批量配置",
 	icon: "lucide:server-cog",
 	description: "批量生成 VSR 设备配置脚本",
-	category: "firewall"
+	category: "other"
 });
 </script>

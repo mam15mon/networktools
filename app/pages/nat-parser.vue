@@ -5,14 +5,14 @@
 	>
 		<div class="space-y-8">
 			<!-- 设备类型选择 -->
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-settings" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							设备类型
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-settings" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						设备类型
+					</UHeading>
+				</div>
 				</template>
 				<URadioGroup
 					v-model="deviceType"
@@ -23,14 +23,14 @@
 			</UCard>
 
 			<!-- 配置输入 -->
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-terminal" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							NAT Server 配置
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-terminal" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						NAT Server 配置
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-4">
 					<UTextarea
@@ -69,45 +69,45 @@
 			<!-- 解析结果 -->
 			<div v-if="parseResult.successEntries.length > 0 || parseResult.failedEntries.length > 0" class="space-y-6">
 				<!-- 统计信息 -->
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<UCard class="bg-(--ui-bg)">
-						<div class="text-center">
-							<p class="text-2xl font-bold text-green-600">
-								{{ parseResult.successEntries.length }}
-							</p>
-							<p class="text-sm text-(--ui-text-muted)">
-								成功解析
-							</p>
-						</div>
-					</UCard>
-					<UCard class="bg-(--ui-bg)">
-						<div class="text-center">
-							<p class="text-2xl font-bold text-red-600">
-								{{ parseResult.failedEntries.length }}
-							</p>
-							<p class="text-sm text-(--ui-text-muted)">
-								解析失败
-							</p>
-						</div>
-					</UCard>
-					<UCard class="bg-(--ui-bg)">
-						<div class="text-center">
-							<p class="text-2xl font-bold text-blue-600">
-								{{ totalEntries }}
-							</p>
-							<p class="text-sm text-(--ui-text-muted)">
-								总条目数
-							</p>
-						</div>
-					</UCard>
-				</div>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<UCard class="bg-(--ui-bg)">
+					<div class="text-center space-y-2">
+						<UBadge variant="soft" color="green" size="lg" class="text-2xl font-bold">
+							{{ parseResult.successEntries.length }}
+						</UBadge>
+						<p class="text-sm text-(--ui-text-muted)">
+							成功解析
+						</p>
+					</div>
+				</UCard>
+				<UCard class="bg-(--ui-bg)">
+					<div class="text-center space-y-2">
+						<UBadge variant="soft" color="red" size="lg" class="text-2xl font-bold">
+							{{ parseResult.failedEntries.length }}
+						</UBadge>
+						<p class="text-sm text-(--ui-text-muted)">
+							解析失败
+						</p>
+					</div>
+				</UCard>
+				<UCard class="bg-(--ui-bg)">
+					<div class="text-center space-y-2">
+						<UBadge variant="soft" color="blue" size="lg" class="text-2xl font-bold">
+							{{ totalEntries }}
+						</UBadge>
+						<p class="text-sm text-(--ui-text-muted)">
+							总条目数
+						</p>
+					</div>
+				</UCard>
+			</div>
 
 				<!-- 成功解析的条目 -->
 				<div v-if="parseResult.successEntries.length > 0">
-					<div class="flex justify-between items-center mb-4">
-						<h3 class="text-xl font-semibold">
-							解析结果
-						</h3>
+				<div class="flex justify-between items-center mb-4">
+					<UHeading :level="3" size="xl" class="font-semibold">
+						解析结果
+					</UHeading>
 						<UButton
 							icon="i-lucide-download"
 							:disabled="parseResult.successEntries.length === 0"
@@ -127,10 +127,10 @@
 				</div>
 
 				<!-- 解析失败的条目 -->
-				<div v-if="parseResult.failedEntries.length > 0">
-					<h3 class="text-xl font-semibold mb-4 text-red-600">
-						解析失败条目
-					</h3>
+			<div v-if="parseResult.failedEntries.length > 0">
+				<UHeading :level="3" size="xl" class="mb-4 font-semibold text-red-600">
+					解析失败条目
+				</UHeading>
 					<UCard class="bg-(--ui-bg-muted) border-(--ui-border)">
 						<div class="space-y-2">
 							<div
@@ -146,14 +146,14 @@
 			</div>
 
 			<!-- 使用说明 -->
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-help-circle" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							使用说明
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-help-circle" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						使用说明
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-4 text-sm">
 					<div class="flex items-start gap-2">

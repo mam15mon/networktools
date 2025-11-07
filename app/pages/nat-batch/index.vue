@@ -4,14 +4,14 @@
 		description="从 Excel 或手动输入批量生成防火墙 NAT 配置命令，集成弹性 IP 映射与运营商数据维护。"
 	>
 		<div class="space-y-8">
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-merge" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							数据来源
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-merge" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						数据来源
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-3">
 					<URadioGroup
@@ -27,14 +27,14 @@
 			</UCard>
 
 			<div v-if="mode === 'excel'" class="space-y-6">
-				<UCard class="bg-(--ui-bg)">
-					<template #header>
-						<div class="flex items-center gap-2">
-							<Icon name="i-lucide-file-spreadsheet" class="size-5" />
-							<h3 class="text-lg font-semibold">
-								Excel 数据
-							</h3>
-						</div>
+			<UCard class="bg-(--ui-bg)">
+				<template #header>
+					<div class="flex items-center gap-2">
+						<Icon name="i-lucide-file-spreadsheet" class="size-5" />
+						<UHeading :level="3" size="lg" class="font-semibold">
+							Excel 数据
+						</UHeading>
+					</div>
 					</template>
 					<div class="space-y-6">
 						<div class="space-y-3">
@@ -66,11 +66,11 @@
 								/>
 							</div>
 
-						<div class="space-y-3">
-							<div class="flex flex-wrap items-center justify-between gap-3">
-								<h4 class="text-base font-semibold">
-									列映射
-								</h4>
+					<div class="space-y-3">
+						<div class="flex flex-wrap items-center justify-between gap-3">
+							<UHeading :level="4" size="md" class="font-semibold">
+								列映射
+							</UHeading>
 								<UButton
 									variant="soft"
 									size="sm"
@@ -111,11 +111,11 @@
 							</div>
 						</div>
 
-							<div class="space-y-2">
-								<div class="flex items-center justify-between">
-									<h4 class="text-base font-semibold">
-										数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
-									</h4>
+						<div class="space-y-2">
+							<div class="flex items-center justify-between">
+								<UHeading :level="4" size="md" class="font-semibold">
+									数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
+								</UHeading>
 								</div>
 								<UTable
 									:columns="excelPreviewColumns"
@@ -149,14 +149,14 @@
 			</div>
 
 			<div v-else class="space-y-6">
-				<UCard class="bg-(--ui-bg)">
-					<template #header>
-						<div class="flex items-center gap-2">
-							<Icon name="i-lucide-clipboard-list" class="size-5" />
-							<h3 class="text-lg font-semibold">
-								手动录入 DNAT 需求
-							</h3>
-						</div>
+			<UCard class="bg-(--ui-bg)">
+				<template #header>
+					<div class="flex items-center gap-2">
+						<Icon name="i-lucide-clipboard-list" class="size-5" />
+						<UHeading :level="3" size="lg" class="font-semibold">
+							手动录入 DNAT 需求
+						</UHeading>
+					</div>
 					</template>
 					<div class="space-y-4">
 						<div class="flex flex-wrap gap-3">
@@ -266,29 +266,28 @@
 				</UCard>
 			</div>
 
-			<UCard v-if="convertErrors.length || natEntries.length" class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-table" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							数据校验结果
-						</h3>
-					</div>
+		<UCard v-if="convertErrors.length || natEntries.length" class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-table" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						数据校验结果
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-4">
-					<div
-						v-if="convertErrors.length"
-						class="rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800"
-					>
-						<p class="font-medium">
-							检测到 {{ convertErrors.length }} 条告警：
-						</p>
-						<ul class="list-disc pl-5 space-y-1">
-							<li v-for="(error, index) in convertErrors" :key="`convert-error-${index}`">
-								{{ error }}
-							</li>
-						</ul>
-					</div>
+				<UAlert
+					v-if="convertErrors.length"
+					variant="warning"
+					icon="i-lucide-alert-triangle"
+					:title="`检测到 ${convertErrors.length} 条告警：`"
+				>
+					<ul class="list-disc pl-5 space-y-1">
+						<li v-for="(error, index) in convertErrors" :key="`convert-error-${index}`">
+							{{ error }}
+						</li>
+					</ul>
+				</UAlert>
 
 					<div v-if="natEntries.length" class="space-y-4">
 						<div class="flex flex-wrap items-center justify-between gap-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -333,14 +332,14 @@
 				</div>
 			</UCard>
 
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-sliders-horizontal" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							设备与输出选项
-						</h3>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-sliders-horizontal" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						设备与输出选项
+					</UHeading>
+				</div>
 				</template>
 				<div class="space-y-4">
 					<div class="grid gap-4 md:grid-cols-2">
@@ -393,29 +392,31 @@
 				</div>
 			</UCard>
 
-			<UCard class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-terminal" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							NAT 命令输出
-						</h3>
-					</div>
-				</template>
-				<div class="space-y-4">
-					<div
-						v-if="missingElasticIps.length"
-						class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
-					>
-						<p>
-							以下内部 IP 未找到弹性 IP 映射：{{ missingElasticIps.join(", ") }}
-						</p>
-						<p class="mt-2">
-							<NuxtLink class="underline" to="/nat-batch/settings">
-								前往配置页面补全映射
-							</NuxtLink>
-						</p>
-					</div>
+		<UCard class="bg-(--ui-bg)">
+			<template #header>
+				<div class="flex items-center gap-2">
+					<Icon name="i-lucide-terminal" class="size-5" />
+					<UHeading :level="3" size="lg" class="font-semibold">
+						NAT 命令输出
+					</UHeading>
+				</div>
+			</template>
+			<div class="space-y-4">
+				<UAlert
+					v-if="missingElasticIps.length"
+					variant="danger"
+					icon="i-lucide-alert-triangle"
+					title="缺少弹性 IP 映射"
+				>
+					<p>
+						以下内部 IP 未找到弹性 IP 映射：{{ missingElasticIps.join(", ") }}
+					</p>
+					<template #actions>
+						<UButton to="/nat-batch/settings" variant="outline" size="sm">
+							前往配置页面补全映射
+						</UButton>
+					</template>
+				</UAlert>
 					<UTextarea
 						v-model="commandsPreview"
 						:rows="12"

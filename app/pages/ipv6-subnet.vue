@@ -26,16 +26,16 @@
 
 			<div v-if="result" class="space-y-8">
 				<section class="space-y-4">
-					<h3 class="text-xl font-semibold">
+					<UHeading :level="3" size="xl" class="font-semibold">
 						结果总览
-					</h3>
+					</UHeading>
 					<UTable :data="summaryRows" :columns="summaryColumns" :ui="tableUi" />
 				</section>
 
 				<section class="space-y-4">
-					<h3 class="text-xl font-semibold">
+					<UHeading :level="3" size="xl" class="font-semibold">
 						{{ addressSectionTitle }}
-					</h3>
+					</UHeading>
 					<p class="text-sm text-(--ui-text-muted)">
 						{{ addressSectionDescription }}
 					</p>

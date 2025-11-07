@@ -42,9 +42,9 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-globe" class="size-5" />
-						<h3 class="text-lg font-semibold">
+						<UHeading :level="3" size="lg" class="font-semibold">
 							API 状态
-						</h3>
+						</UHeading>
 					</div>
 				</template>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -86,18 +86,18 @@
 			<!-- 查询结果 -->
 			<div v-if="locationResult" class="space-y-8">
 				<section class="space-y-4">
-					<h3 class="text-xl font-semibold">
+					<UHeading :level="3" size="xl" class="font-semibold">
 						查询结果
-					</h3>
+					</UHeading>
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<!-- IP 地址信息 -->
 						<UCard class="bg-(--ui-bg)">
 							<template #header>
 								<div class="flex items-center gap-2">
-									<Icon name="i-lucide-globe" class="size-5" />
-									<h4 class="text-lg font-semibold">
-										IP 地址信息
-									</h4>
+							<Icon name="i-lucide-globe" class="size-5" />
+							<UHeading :level="4" size="lg" class="font-semibold">
+								IP 地址信息
+							</UHeading>
 								</div>
 							</template>
 							<div class="space-y-4">
@@ -124,10 +124,10 @@
 						<UCard class="bg-(--ui-bg)">
 							<template #header>
 								<div class="flex items-center gap-2">
-									<Icon name="i-lucide-map-pin" class="size-5" />
-									<h4 class="text-lg font-semibold">
-										地理位置
-									</h4>
+							<Icon name="i-lucide-map-pin" class="size-5" />
+							<UHeading :level="4" size="lg" class="font-semibold">
+								地理位置
+							</UHeading>
 								</div>
 							</template>
 							<div class="space-y-4">
@@ -180,9 +180,9 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-help-circle" class="size-5" />
-						<h3 class="text-lg font-semibold">
+						<UHeading :level="3" size="lg" class="font-semibold">
 							使用说明
-						</h3>
+						</UHeading>
 					</div>
 				</template>
 				<div class="space-y-4 text-sm">

@@ -4,9 +4,9 @@
 			<SvgoLogo :filled="true" :font-controlled="false" class="mx-auto size-40" />
 
 			<div class="flex flex-col items-center gap-y-3">
-				<h1 class="animate-pulse text-3xl sm:text-4xl text-pretty font-bold font-heading">
+				<UHeading :level="1" size="3xl" class="animate-pulse font-bold font-heading text-pretty sm:text-4xl">
 					{{ app.name.toUpperCase() }}
-				</h1>
+				</UHeading>
 			</div>
 		</div>
 	</UContainer>

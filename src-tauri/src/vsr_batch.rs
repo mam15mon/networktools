@@ -1,12 +1,22 @@
 use calamine::{open_workbook_auto, Data, Range, Reader};
+use ipnet::Ipv4Net;
 use rust_xlsxwriter::{Format, FormatAlign, Workbook};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::net::Ipv4Addr;
 use strsim::normalized_levenshtein;
 use tera::Context;
 
 const MAX_PREVIEW_ROWS: usize = 100;
 const VSR_TEMPLATE: &str = include_str!("../templates/vsr_config.tera");
+const DERIVED_POOL_FIELDS: &[&str] = &["start_ip", "end_ip", "pool_ip_gateway"];
+
+#[derive(Debug)]
+struct PoolComputation {
+    gateway: String,
+    start: String,
+    end: String,
+}
 
 const VSR_FIELDS: &[FieldMeta] = &[
     FieldMeta::new("device_name", "设备名称", true, FieldCategory::Core),
@@ -19,9 +29,6 @@ const VSR_FIELDS: &[FieldMeta] = &[
     FieldMeta::new("ppp_username", "PPP 本地用户", false, FieldCategory::Local),
     FieldMeta::new("ppp_password", "PPP 密码", false, FieldCategory::Local),
     FieldMeta::new("pool_cidr", "地址池 CIDR", true, FieldCategory::Core),
-    FieldMeta::new("start_ip", "地址池起始 IP", false, FieldCategory::Core),
-    FieldMeta::new("end_ip", "地址池结束 IP", false, FieldCategory::Core),
-    FieldMeta::new("pool_ip_gateway", "地址池网关", false, FieldCategory::Core),
     FieldMeta::new("ldap_server_ip", "LDAP 服务器 IP", false, FieldCategory::Ldap),
     FieldMeta::new("ldap_login_dn", "LDAP Login DN", false, FieldCategory::Ldap),
     FieldMeta::new("ldap_search_base_dn", "LDAP Search Base DN", false, FieldCategory::Ldap),
@@ -39,6 +46,10 @@ const COLUMN_PATTERNS: &[(&str, &[&str])] = &[
     (
         "gateway",
         &["gateway", "gw", "默认网关", "出口", "下一跳"],
+    ),
+    (
+        "pool_cidr",
+        &["pool_cidr", "cidr", "地址池", "地址池cidr", "pool"],
     ),
     (
         "vsr_username",
@@ -63,12 +74,6 @@ const COLUMN_PATTERNS: &[(&str, &[&str])] = &[
     (
         "ppp_password",
         &["ppp_password", "ppp_pwd", "ppp密码"],
-    ),
-    ("start_ip", &["start_ip", "pool_start", "地址池起始", "起始ip"]),
-    ("end_ip", &["end_ip", "pool_end", "地址池结束", "结束ip"]),
-    (
-        "pool_ip_gateway",
-        &["pool_ip_gateway", "pool_gateway", "地址池网关"],
     ),
     (
         "ldap_server_ip",
@@ -153,7 +158,6 @@ pub struct ConvertVsrRequest {
     pub file_path: String,
     pub sheet_name: Option<String>,
     pub header_row_index: usize,
-    pub column_mapping: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -244,6 +248,9 @@ pub fn export_vsr_template(request: ExportVsrTemplateRequest) -> Result<(), Stri
 
     let mut col_index: u16 = 0;
     for field in VSR_FIELDS.iter() {
+        if DERIVED_POOL_FIELDS.contains(&field.key) {
+            continue;
+        }
         if !should_include_field(field, &options) {
             continue;
         }
@@ -303,7 +310,6 @@ pub fn convert_vsr_entries(request: ConvertVsrRequest) -> Result<ConvertResponse
         file_path,
         sheet_name,
         header_row_index,
-        column_mapping,
     } = request;
 
     let mut workbook = open_workbook_auto(&file_path)
@@ -317,7 +323,7 @@ pub fn convert_vsr_entries(request: ConvertVsrRequest) -> Result<ConvertResponse
         .worksheet_range(&selected)
         .map_err(|err| format!("读取工作表失败: {err}"))?;
 
-    let rows = extract_rows(&range, header_row_index, &column_mapping)?;
+    let rows = extract_rows(&range, header_row_index)?;
     let mut entries = Vec::new();
     let mut errors = Vec::new();
 
@@ -333,16 +339,16 @@ pub fn convert_vsr_entries(request: ConvertVsrRequest) -> Result<ConvertResponse
 
 #[tauri::command]
 pub fn generate_vsr_configs(
-    req: GenerateVsrConfigRequest,
+    request: GenerateVsrConfigRequest,
 ) -> Result<Vec<VsrGeneratedConfig>, String> {
     let mut results = Vec::new();
     let options = TemplateOptions {
-        include_local: req.include_local,
-        include_ldap: req.include_ldap,
-        include_radius: req.include_radius,
+        include_local: request.include_local,
+        include_ldap: request.include_ldap,
+        include_radius: request.include_radius,
     };
 
-    for entry in req.entries {
+    for entry in request.entries {
         let mut context = Context::new();
         context.insert("ip", &entry.ip);
         context.insert("gateway", &entry.gateway);
@@ -470,6 +476,11 @@ fn suggest_column_mapping(columns: &[String]) -> HashMap<String, String> {
         let mut best_column: Option<String> = None;
         for column in columns {
             let normalized = normalize(column);
+            if normalized == *field {
+                best_score = 1.0;
+                best_column = Some(column.clone());
+                break;
+            }
             for pattern in *patterns {
                 let score = if normalized == pattern.to_lowercase() {
                     1.0
@@ -494,25 +505,33 @@ fn suggest_column_mapping(columns: &[String]) -> HashMap<String, String> {
 fn extract_rows(
     range: &Range<Data>,
     header_row_index: usize,
-    column_mapping: &HashMap<String, String>,
 ) -> Result<Vec<VsrDeviceEntry>, String> {
     let header_row = range
         .rows()
         .nth(header_row_index)
         .ok_or_else(|| format!("无法找到第 {} 行表头", header_row_index + 1))?;
 
+    let columns = header_row
+        .iter()
+        .map(data_type_to_string)
+        .collect::<Vec<_>>();
+    if columns.is_empty() {
+        return Err("检测到空表头行，无法解析列映射".to_string());
+    }
+
+    let column_mapping = suggest_column_mapping(&columns);
+
     let mut column_indices = HashMap::new();
-    for (idx, cell) in header_row.iter().enumerate() {
-        let name = data_type_to_string(cell);
+    for (idx, name) in columns.iter().enumerate() {
         if name.is_empty() {
             continue;
         }
-        column_indices.insert(normalize(&name), idx);
+        column_indices.insert(normalize(name), idx);
     }
 
     for field in VSR_FIELDS.iter().filter(|f| f.required) {
         if !column_mapping.contains_key(field.key) {
-            return Err(format!("缺少列映射: {}", field.key));
+            return Err(format!("无法根据表头匹配到列: {}", field.key));
         }
     }
 
@@ -526,7 +545,7 @@ fn extract_rows(
         }
 
         let mut values = HashMap::new();
-        for (field_key, column_name) in column_mapping {
+        for (field_key, column_name) in column_mapping.iter() {
             if let Some(col_index) = column_indices.get(&normalize(column_name)) {
                 if let Some(cell) = row.get(*col_index) {
                     values.insert(field_key.clone(), data_type_to_string(cell));
@@ -586,6 +605,31 @@ fn extract_rows(
     }
 
     Ok(rows)
+}
+
+fn compute_pool_from_cidr(cidr: &str) -> Option<PoolComputation> {
+    let parsed: Ipv4Net = cidr.trim().parse().ok()?;
+    let network = u32::from(parsed.network());
+    let broadcast = u32::from(parsed.broadcast());
+
+    // 至少需要网关 + 起始 + 结束三个地址
+    if broadcast.saturating_sub(network) < 3 {
+        return None;
+    }
+
+    let gateway = network + 1;
+    let start = gateway + 1;
+    let end = broadcast.saturating_sub(1);
+
+    if start > end {
+        return None;
+    }
+
+    Some(PoolComputation {
+        gateway: Ipv4Addr::from(gateway).to_string(),
+        start: Ipv4Addr::from(start).to_string(),
+        end: Ipv4Addr::from(end).to_string(),
+    })
 }
 
 fn validate_entry(entry: VsrDeviceEntry) -> Result<VsrDeviceEntry, String> {
