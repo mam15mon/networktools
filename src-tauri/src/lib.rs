@@ -11,6 +11,7 @@ mod ipv6_subnet;
 mod isp_manager;
 mod nat_batch_generator;
 mod nat_parser;
+mod vsr_batch;
 
 pub fn run() {
     tauri::Builder::default()
@@ -67,7 +68,12 @@ pub fn run() {
             isp_manager::update_isp_data,
             isp_manager::get_isp_summary,
             isp_manager::get_next_available_elastic_ip,
-            isp_manager::update_isp_from_github
+            isp_manager::update_isp_from_github,
+            vsr_batch::export_vsr_template,
+            vsr_batch::process_vsr_excel,
+            vsr_batch::convert_vsr_entries,
+            vsr_batch::generate_vsr_configs,
+            vsr_batch::export_vsr_configs
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

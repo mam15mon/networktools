@@ -45,6 +45,7 @@ strsim = "0.11"
 zip = { version = "0.6", default-features = false, features = [ "deflate" ] }
 tempfile = "3.12"
 rust_xlsxwriter = { version = "0.64", default-features = false, features = [ "chrono" ] }
+tera = { version = "1.19", default-features = false }
 
 [dependencies.tauri]
 version = "2.8.5"
