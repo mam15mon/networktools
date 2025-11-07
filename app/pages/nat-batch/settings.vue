@@ -12,43 +12,18 @@
 				</NuxtLink>
 			</div>
 			<UCard class="bg-(--ui-bg)">
-		<template #header>
-			<div class="flex items-center gap-2">
-				<Icon name="i-lucide-cloud" class="size-5" />
-				<UHeading :level="3" size="md">
-					弹性 IP 管理
-				</UHeading>
-			</div>
-		</template>
-				<div class="space-y-4">
-					<div class="grid gap-4 md:grid-cols-2">
-						<UFormField label="内部 IP" name="internalIp">
-							<UInput
-								v-model="newMapping.internalIp"
-								placeholder="192.168.1.100"
-								clearable
-							/>
-						</UFormField>
-						<UFormField label="弹性 IP" name="elasticIp">
-							<UInput
-								v-model="newMapping.elasticIp"
-								placeholder="222.240.138.4"
-								clearable
-							/>
-						</UFormField>
+			<template #header>
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-2">
+						<Icon name="i-lucide-cloud" class="size-5" />
+						<UHeading :level="3" size="md">
+							弹性 IP 管理
+						</UHeading>
 					</div>
-
-					<div class="flex flex-wrap items-center gap-3">
-						<UInput
-							v-model="searchKeyword"
-							placeholder="搜索内部 IP 或弹性 IP"
-							icon="i-lucide-search"
-							class="w-full md:w-80"
-							clearable
-						/>
-						<UButton icon="i-lucide-plus" @click="addElasticMapping">
-							添加/更新映射
-						</UButton>
+					<div class="flex items-center gap-2">
+						<UBadge variant="soft" color="primary">
+							{{ elasticMappings.length }} 条映射
+						</UBadge>
 						<UButton
 							variant="outline"
 							size="sm"
@@ -57,78 +32,153 @@
 						>
 							刷新
 						</UButton>
-				<UButton
-					variant="outline"
-					color="red"
-					size="sm"
-					icon="i-lucide-trash-2"
-					:disabled="selectedInternalIps.length === 0"
-					@click="bulkDeleteMappings"
-				>
-					批量删除
-				</UButton>
-				<div v-if="selectedInternalIps.length">
-					<UBadge variant="soft" color="primary">
-						已选择 {{ selectedInternalIps.length }} 条
-					</UBadge>
+					</div>
 				</div>
-			</div>
+			</template>
 
-					<div class="space-y-3">
-						<UFormField label="批量导入" name="bulkMapping">
-							<UTextarea
-								v-model="bulkMappingInput"
-								:rows="4"
-								placeholder="按行输入映射，例如：&#10;192.168.1.100 -> 222.240.138.4&#10;192.168.1.101 -> 222.240.138.5"
+			<div class="space-y-6">
+				<!-- 快速添加区域 -->
+				<div class="p-4 bg-(--ui-bg-muted) rounded-lg border border-(--ui-border)">
+					<div class="flex items-center gap-2 mb-3">
+						<Icon name="i-lucide-plus-circle" class="size-4 text-(--ui-text-muted)" />
+						<h4 class="text-sm font-semibold text-(--ui-text)">快速添加映射</h4>
+					</div>
+					<div class="grid gap-3 md:grid-cols-3">
+						<UFormField label="内部 IP" name="internalIp">
+							<UInput
+								v-model="newMapping.internalIp"
+								placeholder="192.168.1.100"
+								clearable
+								size="sm"
 							/>
 						</UFormField>
-						<div class="flex flex-wrap items-center gap-3">
-							<UCheckbox v-model="overwriteExisting" label="覆盖已存在的映射" />
-							<UButton
-								variant="soft"
+						<UFormField label="弹性 IP" name="elasticIp">
+							<UInput
+								v-model="newMapping.elasticIp"
+								placeholder="222.240.138.4"
+								clearable
 								size="sm"
-								icon="i-lucide-upload"
-								:disabled="!bulkMappingInput.trim()"
-								@click="bulkAddElasticMappings"
+							/>
+						</UFormField>
+						<div class="flex items-end">
+							<UButton
+								icon="i-lucide-plus"
+								@click="addElasticMapping"
+								class="w-full"
+								size="sm"
 							>
-								导入
+								添加/更新
 							</UButton>
 						</div>
 					</div>
-
-					<UTable
-						:columns="elasticColumns"
-						:data="filteredElasticMappings"
-						:row-key="row => row.internalIp"
-						class="w-full"
-						empty="暂无映射，请先添加。"
-					>
-						<template #select-header>
-							<div class="flex justify-center">
-								<UCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
-							</div>
-						</template>
-						<template #select-data="{ row }">
-							<div class="flex justify-center">
-								<UCheckbox
-									:model-value="selectedInternalIps.includes(row.original.internalIp)"
-									@update:model-value="updateSelection(row.original.internalIp, $event)"
-								/>
-							</div>
-						</template>
-						<template #actions-data="{ row }">
-							<div class="flex justify-center">
-								<UButton
-									variant="ghost"
-									size="xs"
-									icon="i-lucide-trash"
-									@click="removeElasticMapping(row.original.internalIp)"
-								/>
-							</div>
-						</template>
-					</UTable>
 				</div>
-			</UCard>
+
+				<!-- 操作工具栏 -->
+				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+						<UInput
+							v-model="searchKeyword"
+							placeholder="搜索内部 IP 或弹性 IP"
+							icon="i-lucide-search"
+							class="w-full sm:w-64"
+							clearable
+							size="sm"
+						/>
+						<div class="flex items-center gap-2">
+							<UButton
+								variant="outline"
+								color="red"
+								size="sm"
+								icon="i-lucide-trash-2"
+								:disabled="selectedInternalIps.length === 0"
+								@click="bulkDeleteMappings"
+							>
+								批量删除
+							</UButton>
+							<div v-if="selectedInternalIps.length">
+								<UBadge variant="soft" color="primary">
+									已选择 {{ selectedInternalIps.length }} 条
+								</UBadge>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 批量导入区域 -->
+				<div class="border border-(--ui-border) rounded-lg overflow-hidden">
+					<UAccordion
+						:items="[{
+							label: '批量导入',
+							icon: 'i-lucide-upload',
+							defaultOpen: false
+						}]"
+					>
+						<template #item>
+							<div class="p-4 space-y-4 bg-(--ui-bg)">
+								<div class="space-y-3">
+									<UFormField label="映射数据" name="bulkMapping">
+										<UTextarea
+											v-model="bulkMappingInput"
+											:rows="4"
+											placeholder="按行输入映射，例如：&#10;192.168.1.100 -> 222.240.138.4&#10;192.168.1.101 -> 222.240.138.5"
+										/>
+									</UFormField>
+									<div class="flex flex-wrap items-center gap-3">
+										<UCheckbox
+											v-model="overwriteExisting"
+											label="覆盖已存在的映射"
+											size="sm"
+										/>
+										<UButton
+											variant="soft"
+											size="sm"
+											icon="i-lucide-upload"
+											:disabled="!bulkMappingInput.trim()"
+											@click="bulkAddElasticMappings"
+										>
+											导入映射
+										</UButton>
+									</div>
+								</div>
+							</div>
+						</template>
+					</UAccordion>
+				</div>
+
+				<!-- 数据表格 -->
+				<UTable
+					:columns="elasticColumns"
+					:data="filteredElasticMappings"
+					:row-key="row => row.internalIp"
+					class="w-full"
+					empty="暂无映射，请先添加。"
+				>
+					<template #select-header>
+						<div class="flex justify-center">
+							<UCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
+						</div>
+					</template>
+					<template #select-data="{ row }">
+						<div class="flex justify-center">
+							<UCheckbox
+								:model-value="selectedInternalIps.includes(row.original.internalIp)"
+								@update:model-value="updateSelection(row.original.internalIp, $event)"
+							/>
+						</div>
+					</template>
+					<template #actions-data="{ row }">
+						<div class="flex justify-center">
+							<UButton
+								variant="ghost"
+								size="xs"
+								icon="i-lucide-trash"
+								@click="removeElasticMapping(row.original.internalIp)"
+							/>
+						</div>
+					</template>
+				</UTable>
+			</div>
+		</UCard>
 
 			<UCard class="bg-(--ui-bg)">
 	<template #header>
@@ -210,10 +260,10 @@
 	});
 
 	const elasticColumns = [
-		{ id: "select", header: "" },
+		{ id: "select", accessorKey: "select", header: "" },
 		{ accessorKey: "internalIp", header: "内部 IP", id: "internalIp" },
 		{ accessorKey: "elasticIp", header: "弹性 IP", id: "elasticIp" },
-		{ id: "actions", header: "操作" }
+		{ id: "actions", accessorKey: "actions", header: "操作" }
 	];
 
 	const isAllSelected = computed(() => {
@@ -283,7 +333,9 @@ async function loadIspSummary() {
 
 	async function removeElasticMapping(internalIp: string) {
 		try {
-			await useTauriCoreInvoke("remove_elastic_ip_mapping", { internal_ip: internalIp });
+			await useTauriCoreInvoke("remove_elastic_ip_mapping", {
+				request: { internalIp }
+			});
 			await loadElasticMappings();
 			toast.add({
 				title: "映射已删除",
@@ -400,7 +452,9 @@ async function loadIspSummary() {
 
 		try {
 			for (const internalIp of selectedInternalIps.value) {
-				await useTauriCoreInvoke("remove_elastic_ip_mapping", { internal_ip: internalIp });
+				await useTauriCoreInvoke("remove_elastic_ip_mapping", {
+					request: { internalIp }
+				});
 			}
 			await loadElasticMappings();
 			selectedInternalIps.value = [];

@@ -340,57 +340,100 @@
 						设备与输出选项
 					</UHeading>
 				</div>
-				</template>
-				<div class="space-y-4">
-					<div class="grid gap-4 md:grid-cols-2">
-						<div class="space-y-2">
-							<label class="text-sm font-semibold text-(--ui-text-muted)">
-								设备类型
-							</label>
-							<URadioGroup
-								v-model="deviceType"
-								:items="deviceOptions"
-								orientation="horizontal"
-								class="flex flex-wrap gap-4"
-							/>
+			</template>
+
+			<div class="space-y-6">
+				<!-- 主要配置区域 -->
+				<div class="grid gap-6 md:grid-cols-2">
+					<!-- 设备类型 -->
+					<div class="space-y-3">
+						<label class="text-sm font-semibold text-(--ui-text-muted)">
+							设备类型
+						</label>
+						<URadioGroup
+							v-model="deviceType"
+							:items="deviceOptions"
+							orientation="horizontal"
+							class="flex flex-wrap gap-4"
+						/>
+					</div>
+
+					<!-- 运营商数据来源 -->
+					<div class="space-y-3">
+						<label class="text-sm font-semibold text-(--ui-text-muted)">
+							运营商数据来源
+						</label>
+						<URadioGroup
+							v-model="ispSource"
+							:items="ispSourceOptions"
+							orientation="horizontal"
+							class="flex flex-wrap gap-4"
+						/>
+						<p class="text-xs text-(--ui-text-muted) mt-2">
+							GitHub 无法访问时，可切换为在线 API 查询（依赖公网访问）。
+						</p>
+					</div>
+				</div>
+
+				<!-- 弹性 IP 映射配置 -->
+				<div class="p-4 bg-(--ui-bg-muted) rounded-lg border border-(--ui-border)">
+					<div class="flex items-start justify-between gap-4">
+						<div class="space-y-3 flex-1">
+							<div class="flex items-center gap-3">
+								<Icon name="i-lucide-globe" class="size-4 text-(--ui-text-muted)" />
+								<label class="text-sm font-semibold text-(--ui-text)">
+									弹性 IP 映射
+								</label>
+							</div>
+							<div class="flex items-center gap-3">
+								<USwitch v-model="useElasticIp" size="sm" />
+								<span class="text-sm text-(--ui-text)">
+									{{ useElasticIp ? "已启用" : "已关闭" }}
+								</span>
+							</div>
 						</div>
-					<div class="space-y-2">
-						<div class="flex flex-wrap items-center justify-between gap-3">
-							<label class="text-sm font-semibold text-(--ui-text-muted)">
-								弹性 IP 映射
-							</label>
-							<NuxtLink to="/nat-batch/settings">
-								<UButton
-									variant="outline"
-									size="sm"
-									icon="i-lucide-external-link"
-								>
-									打开配置页面
-								</UButton>
-							</NuxtLink>
-						</div>
+						<NuxtLink to="/nat-batch/settings">
+							<UButton
+								variant="outline"
+								size="sm"
+								icon="i-lucide-external-link"
+							>
+								配置映射
+							</UButton>
+						</NuxtLink>
+					</div>
+				</div>
+
+				<!-- H3C 专用配置 -->
+				<div v-if="deviceType === 'h3c'" class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+					<div class="flex items-center gap-2 mb-3">
+						<Icon name="i-lucide-settings" class="size-4 text-amber-600" />
+						<label class="text-sm font-semibold text-amber-800">
+							H3C 设备专用配置
+						</label>
+					</div>
+					<div class="grid gap-3 md:grid-cols-[200px_1fr]">
+						<label class="text-sm font-medium text-amber-700">
+							VRRP ID
+						</label>
 						<div class="flex items-center gap-3">
-							<USwitch v-model="useElasticIp" />
-							<span class="text-sm">
-								{{ useElasticIp ? "启用" : "关闭" }}
+							<UInput
+								v-model="vrrpId"
+								type="number"
+								:min="1"
+								:max="65535"
+								placeholder="请输入 VRRP ID（1-65535）"
+								class="flex-1"
+								size="sm"
+							/>
+							<span class="text-xs text-amber-600">
+								留空表示不配置 VRRP
 							</span>
 						</div>
 					</div>
 				</div>
-				<div v-if="deviceType === 'h3c'" class="grid gap-3 md:grid-cols-[220px_1fr]">
-					<label class="text-sm font-semibold text-(--ui-text-muted)">
-						VRRP ID
-					</label>
-					<UInput
-						v-model="vrrpId"
-						type="number"
-						:min="1"
-						:max="65535"
-						placeholder="请输入 H3C VRRP ID"
-					/>
-				</div>
-				</div>
-			</UCard>
+			</div>
+		</UCard>
 
 		<UCard class="bg-(--ui-bg)">
 			<template #header>
@@ -470,7 +513,8 @@
 		ExcelAnalysis,
 		GenerateNatCommandsResponse,
 		ManualEntryRequest,
-		NatEntry
+		NatEntry,
+		IspSource
 	} from "~/types/nat-batch";
 	import { computed, reactive, ref, watch } from "vue";
 	import { extractErrorMessage } from "~/utils/error";
@@ -524,9 +568,10 @@
 
 	const manualRows = ref<ManualRow[]>([createManualRow()]);
 
-	const useElasticIp = ref(true);
-	const deviceType = ref<DeviceType>("huawei");
-	const vrrpId = ref("");
+    const useElasticIp = ref(true);
+    const deviceType = ref<DeviceType>("huawei");
+    const vrrpId = ref("");
+    const ispSource = ref<IspSource>("local");
 
 	const excelColumns = computed(() => excelState.analysis?.columns ?? []);
 	const previewRows = computed(() => excelState.previewRows.slice(0, 10));
@@ -592,6 +637,11 @@ const isColumnMappingIncomplete = computed(() => {
 		{ label: "H3C", value: "h3c" }
 	];
 
+	const ispSourceOptions = [
+		{ label: "离线（本地 YAML 数据）", value: "local" },
+		{ label: "在线 API 查询", value: "online" }
+	];
+
 	const shouldIgnoreSheetChange = ref(false);
 
 	watch(
@@ -613,6 +663,14 @@ const isColumnMappingIncomplete = computed(() => {
 		() => {
 			convertErrors.value = [];
 			natEntries.value = [];
+			generatedCommands.value = [];
+			missingElasticIps.value = [];
+		}
+	);
+
+	watch(
+		() => ispSource.value,
+		() => {
 			generatedCommands.value = [];
 			missingElasticIps.value = [];
 		}
@@ -880,7 +938,8 @@ const isColumnMappingIncomplete = computed(() => {
 			const payload: Record<string, unknown> = {
 				entries: natEntries.value,
 				useElasticIp: useElasticIp.value,
-				deviceType: deviceType.value
+				deviceType: deviceType.value,
+				ispSource: ispSource.value
 			};
 			if (deviceType.value === "h3c" && parsedVrrp !== null) {
 				payload.vrrpId = parsedVrrp;
