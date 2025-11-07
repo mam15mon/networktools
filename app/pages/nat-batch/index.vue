@@ -13,8 +13,13 @@
 						</h3>
 					</div>
 				</template>
-				<div class="flex flex-wrap items-center gap-6">
-					<URadioGroup v-model="mode" :items="modeOptions" class="flex gap-6 flex-wrap" />
+				<div class="space-y-3">
+					<URadioGroup
+						v-model="mode"
+						:items="modeOptions"
+						orientation="horizontal"
+						class="flex flex-wrap gap-6"
+					/>
 					<p class="text-sm text-(--ui-text-muted)">
 						选择 Excel 导入或手动录入需求，后续步骤将根据模式自动调整。
 					</p>
@@ -32,16 +37,20 @@
 						</div>
 					</template>
 					<div class="space-y-6">
-						<div class="flex flex-wrap items-center gap-3">
-							<UButton :loading="excelState.isLoading" icon="i-lucide-folder-open" @click="handleSelectExcel">
-								选择 Excel 文件
-							</UButton>
-							<UButton variant="outline" icon="i-lucide-download" @click="handleExportTemplate">
-								导出模板
-							</UButton>
-							<p v-if="excelState.filePath" class="text-sm text-(--ui-text-muted) break-all">
-								当前文件：{{ excelState.filePath }}
-							</p>
+						<div class="space-y-3">
+							<div class="flex flex-wrap items-center gap-3">
+								<UButton :loading="excelState.isLoading" icon="i-lucide-folder-open" @click="handleSelectExcel">
+									选择 Excel 文件
+								</UButton>
+								<UButton variant="outline" icon="i-lucide-download" @click="handleExportTemplate">
+									导出模板
+								</UButton>
+							</div>
+							<div v-if="excelState.filePath" class="p-3 bg-(--ui-bg-muted) rounded-md">
+								<p class="text-sm text-(--ui-text-muted) break-all">
+									<span class="font-medium">当前文件：</span>{{ excelState.filePath }}
+								</p>
+							</div>
 						</div>
 
 						<div v-if="excelState.analysis" class="space-y-4">
@@ -57,39 +66,50 @@
 								/>
 							</div>
 
-							<div class="space-y-3">
-								<div class="flex items-center justify-between">
-									<h4 class="text-base font-semibold">
-										列映射
-									</h4>
-									<UButton
-										variant="soft"
-										size="sm"
-										icon="i-lucide-refresh-cw"
-										@click="resetColumnMapping"
-									>
-										重置为推荐
-									</UButton>
-								</div>
-								<div class="grid gap-4 lg:grid-cols-2">
-									<div
-										v-for="field in requiredFields"
-										:key="field"
-										class="space-y-1.5"
-									>
-										<label class="text-xs font-semibold text-(--ui-text-muted)">
+						<div class="space-y-3">
+							<div class="flex flex-wrap items-center justify-between gap-3">
+								<h4 class="text-base font-semibold">
+									列映射
+								</h4>
+								<UButton
+									variant="soft"
+									size="sm"
+									icon="i-lucide-refresh-cw"
+									@click="resetColumnMapping"
+								>
+									重置为推荐
+								</UButton>
+							</div>
+							<div class="flex flex-wrap gap-4">
+								<div
+									v-for="field in requiredFields"
+									:key="field"
+									class="flex flex-col gap-2 min-w-[160px] flex-1"
+								>
+									<div class="flex items-center justify-between gap-2">
+										<span class="text-xs font-semibold text-(--ui-text-muted)">
 											{{ field }}
-										</label>
-										<USelect
-											v-model="excelState.columnMapping[field]"
-											:items="[{ label: '未选择', value: '' }, ...excelColumns.map(col => ({ label: col || '(空列)', value: col }))]"
-											placeholder="未选择"
-											class="w-full"
-											size="sm"
-										/>
+										</span>
+										<div v-if="isFieldMapped(field)" class="flex items-center gap-1 text-xs text-green-600">
+											<Icon name="i-lucide-check" class="size-3" />
+											<span>已映射</span>
+										</div>
+										<div v-else class="flex items-center gap-1 text-xs text-gray-400">
+											<Icon name="i-lucide-circle" class="size-3" />
+											<span>未映射</span>
+										</div>
 									</div>
+									<USelect
+										v-model="excelState.columnMapping[field]"
+										:items="columnOptions"
+										placeholder="选择 Excel 列"
+										class="w-full"
+										size="sm"
+										:popper="{ strategy: 'fixed', placement: 'bottom-start' }"
+									/>
 								</div>
 							</div>
+						</div>
 
 							<div class="space-y-2">
 								<div class="flex items-center justify-between">
@@ -99,7 +119,7 @@
 								</div>
 								<UTable
 									:columns="excelPreviewColumns"
-									:rows="excelPreviewRows"
+									:data="excelPreviewRows"
 									class="w-full"
 								/>
 							</div>
@@ -152,7 +172,7 @@
 								清空
 							</UButton>
 						</div>
-						<div class="overflow-x-auto rounded-md border border-(--ui-border)">
+						<div class="overflow-x-auto rounded-lg border border-(--ui-border) shadow-sm">
 							<table class="w-full min-w-[720px] text-sm">
 								<thead>
 									<tr class="bg-(--ui-bg-muted)">
@@ -270,15 +290,18 @@
 						</ul>
 					</div>
 
-					<div v-if="natEntries.length" class="space-y-3">
-						<div class="flex flex-wrap items-center justify-between gap-3">
-							<div>
-								<p class="text-base font-semibold">
-									已校验通过 {{ natEntries.length }} 条记录
-								</p>
-								<p class="text-sm text-(--ui-text-muted)">
-									预览前 {{ Math.min(natEntries.length, 10) }} 条结果，生成命令时会全部使用。
-								</p>
+					<div v-if="natEntries.length" class="space-y-4">
+						<div class="flex flex-wrap items-center justify-between gap-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+							<div class="flex items-center gap-2">
+								<Icon name="i-lucide-check-circle" class="size-5 text-green-600" />
+								<div>
+									<p class="text-base font-semibold text-green-800">
+										已校验通过 {{ natEntries.length }} 条记录
+									</p>
+									<p class="text-sm text-green-600">
+										预览前 {{ Math.min(natEntries.length, 10) }} 条结果，生成命令时会全部使用。
+									</p>
+								</div>
 							</div>
 							<UButton
 								variant="outline"
@@ -291,28 +314,19 @@
 						</div>
 						<UTable
 							:columns="validationColumns"
-							:rows="previewEntries"
+							:data="previewEntries"
+							:row-key="row => row.rowIndex"
 							class="w-full"
 						>
-							<template #rowIndex-data="{ row }">
-								第 {{ row.rowIndex }} 行
+							<template #rowIndex-cell="{ row }">
+								第 {{ row.original.rowIndex }} 行
 							</template>
-							<template #internalPort-data="{ row }">
-								<div v-if="row.internalPortStart !== null">
-									{{ formatPortRange(row.internalPortStart, row.internalPortEnd) }}
-								</div>
-							</template>
-							<template #publicIps-data="{ row }">
+							<template #publicIps-cell="{ row }">
 								<ul class="space-y-1">
-									<li v-for="ip in row.publicIps" :key="`pub-${row.rowIndex}-${ip}`">
+									<li v-for="ip in row.original.publicIps" :key="`pub-${row.original.rowIndex}-${ip}`">
 										{{ ip }}
 									</li>
 								</ul>
-							</template>
-							<template #publicPort-data="{ row }">
-								<div v-if="row.publicPortStart !== null">
-									{{ formatPortRange(row.publicPortStart, row.publicPortEnd) }}
-								</div>
 							</template>
 						</UTable>
 					</div>
@@ -334,43 +348,48 @@
 							<label class="text-sm font-semibold text-(--ui-text-muted)">
 								设备类型
 							</label>
-							<URadioGroup v-model="deviceType" :items="deviceOptions" class="flex gap-4" />
+							<URadioGroup
+								v-model="deviceType"
+								:items="deviceOptions"
+								orientation="horizontal"
+								class="flex flex-wrap gap-4"
+							/>
 						</div>
-						<div class="space-y-2">
+					<div class="space-y-2">
+						<div class="flex flex-wrap items-center justify-between gap-3">
 							<label class="text-sm font-semibold text-(--ui-text-muted)">
 								弹性 IP 映射
 							</label>
-							<div class="flex items-center gap-3">
-								<USwitch v-model="useElasticIp" />
-								<span class="text-sm">
-									{{ useElasticIp ? "启用" : "关闭" }}
-								</span>
-							</div>
+							<NuxtLink to="/nat-batch/settings">
+								<UButton
+									variant="outline"
+									size="sm"
+									icon="i-lucide-external-link"
+								>
+									打开配置页面
+								</UButton>
+							</NuxtLink>
+						</div>
+						<div class="flex items-center gap-3">
+							<USwitch v-model="useElasticIp" />
+							<span class="text-sm">
+								{{ useElasticIp ? "启用" : "关闭" }}
+							</span>
 						</div>
 					</div>
-					<div v-if="deviceType === 'h3c'" class="grid gap-3 md:grid-cols-[220px_1fr]">
-						<label class="text-sm font-semibold text-(--ui-text-muted)">
-							VRRP ID
-						</label>
-						<UInput
-							v-model="vrrpId"
-							type="number"
-							:min="1"
-							:max="65535"
-							placeholder="请输入 H3C VRRP ID"
-						/>
-					</div>
-					<div>
-						<NuxtLink to="/nat-batch/settings">
-							<UButton
-								variant="outline"
-								size="sm"
-								icon="i-lucide-external-link"
-							>
-								打开配置页面
-							</UButton>
-						</NuxtLink>
-					</div>
+				</div>
+				<div v-if="deviceType === 'h3c'" class="grid gap-3 md:grid-cols-[220px_1fr]">
+					<label class="text-sm font-semibold text-(--ui-text-muted)">
+						VRRP ID
+					</label>
+					<UInput
+						v-model="vrrpId"
+						type="number"
+						:min="1"
+						:max="65535"
+						placeholder="请输入 H3C VRRP ID"
+					/>
+				</div>
 				</div>
 			</UCard>
 
@@ -404,31 +423,38 @@
 						readonly
 						placeholder="点击“生成 NAT 命令”后在此查看结果"
 					/>
-					<div class="flex flex-wrap gap-3">
-						<UButton
-							icon="i-lucide-cpu"
-							:loading="generationLoading"
-							:disabled="!natEntries.length"
-							@click="generateCommands"
-						>
-							生成 NAT 命令
-						</UButton>
-						<UButton
-							variant="outline"
-							icon="i-lucide-copy"
-							:disabled="!generatedCommands.length"
-							@click="copyCommands"
-						>
-							复制到剪贴板
-						</UButton>
-						<UButton
-							variant="outline"
-							icon="i-lucide-save"
-							:disabled="!generatedCommands.length"
-							@click="saveCommandsToFile"
-						>
-							保存到文件
-						</UButton>
+					<div class="flex flex-wrap items-center gap-3">
+						<div class="flex items-center gap-2">
+							<UButton
+								icon="i-lucide-cpu"
+								:loading="generationLoading"
+								:disabled="!natEntries.length"
+								@click="generateCommands"
+								size="md"
+							>
+								生成 NAT 命令
+							</UButton>
+						</div>
+						<div class="flex items-center gap-2">
+							<UButton
+								variant="outline"
+								icon="i-lucide-copy"
+								:disabled="!generatedCommands.length"
+								@click="copyCommands"
+								size="sm"
+							>
+								复制
+							</UButton>
+							<UButton
+								variant="outline"
+								icon="i-lucide-save"
+								:disabled="!generatedCommands.length"
+								@click="saveCommandsToFile"
+								size="sm"
+							>
+								保存
+							</UButton>
+						</div>
 					</div>
 				</div>
 			</UCard>
@@ -456,6 +482,7 @@
 	});
 
 	const requiredFields = ["协议", "主机IP", "内网端口", "外网IP", "外网端口"];
+	const UNMAPPED_VALUE = "__unmapped__";
 
 	type Mode = "excel" | "manual";
 
@@ -479,7 +506,10 @@
 		filePath: "",
 		analysis: null as ExcelAnalysis | null,
 		selectedSheet: "",
-		columnMapping: {} as Record<string, string>,
+		columnMapping: requiredFields.reduce<Record<string, string>>((acc, field) => {
+			acc[field] = UNMAPPED_VALUE;
+			return acc;
+		}, {}),
 		previewRows: [] as string[][],
 		isLoading: false
 	});
@@ -500,13 +530,25 @@
 	const excelColumns = computed(() => excelState.analysis?.columns ?? []);
 	const previewRows = computed(() => excelState.previewRows.slice(0, 10));
 
-	const excelPreviewColumns = computed(() => {
-		const _columns = excelColumns.value;
-		return _columns.map((column, index) => ({
-			key: `col_${index}`,
-			label: column || `列 ${index + 1}`
-		}));
-	});
+	// 列映射选项
+	const columnOptions = computed(() => [
+		{ label: '未选择', value: UNMAPPED_VALUE },
+		...excelColumns.value.map((col) => ({ label: col || '(空列)', value: col || UNMAPPED_VALUE }))
+	]);
+
+	// 检查字段是否已映射
+	function isFieldMapped(field: string) {
+		const value = excelState.columnMapping[field];
+		return value && value !== UNMAPPED_VALUE;
+	}
+
+	const excelPreviewColumns = computed(() =>
+		excelColumns.value.map((column, index) => ({
+			id: `col_${index}`,
+			accessorKey: `col_${index}`,
+			header: column || `列 ${index + 1}`
+		}))
+	);
 
 	const excelPreviewRows = computed(() => {
 		const _columns = excelColumns.value;
@@ -519,38 +561,28 @@
 		});
 	});
 
-	const validationColumns = computed(() => [
-		{
-			key: "rowIndex",
-			label: "原始行",
-			rowClass: "text-center"
-		},
-		{
-			key: "protocol",
-			label: "协议"
-		},
-		{
-			key: "internalIp",
-			label: "内部地址"
-		},
-		{
-			key: "internalPort",
-			label: "端口"
-		},
-		{
-			key: "publicIps",
-			label: "公网地址"
-		},
-		{
-			key: "publicPort",
-			label: "公网端口"
-		}
-	]);
-	const previewEntries = computed(() => natEntries.value.slice(0, 10));
-	const isColumnMappingIncomplete = computed(() => {
-		if (!excelState.analysis) return true;
-		return requiredFields.some((field) => !excelState.columnMapping[field]);
+const validationColumns = computed(() => [
+	{ id: "rowIndex", accessorKey: "rowIndex", header: "原始行" },
+	{ id: "protocol", accessorKey: "protocol", header: "协议" },
+	{ id: "internalIp", accessorKey: "internalIp", header: "内部地址" },
+	{ id: "internalPort", accessorKey: "internalPortDisplay", header: "端口" },
+	{ id: "publicIps", accessorKey: "publicIps", header: "公网地址" },
+	{ id: "publicPort", accessorKey: "publicPortDisplay", header: "公网端口" }
+]);
+const previewEntries = computed(() =>
+	natEntries.value.slice(0, 10).map((entry) => ({
+		...entry,
+		internalPortDisplay: formatPortRange(entry.internalPortStart, entry.internalPortEnd),
+		publicPortDisplay: formatPortRange(entry.publicPortStart, entry.publicPortEnd)
+	}))
+);
+const isColumnMappingIncomplete = computed(() => {
+	if (!excelState.analysis) return true;
+	return requiredFields.some((field) => {
+		const value = excelState.columnMapping[field];
+		return !value || value === UNMAPPED_VALUE;
 	});
+});
 
 	const commandsPreview = computed(() => generatedCommands.value.join("\n"));
 
@@ -599,7 +631,7 @@
 		if (!excelState.analysis) return;
 		const mapping: Record<string, string> = {};
 		requiredFields.forEach((field) => {
-			mapping[field] = excelState.analysis?.suggestedMapping[field] ?? "";
+			mapping[field] = excelState.analysis?.suggestedMapping[field] ?? UNMAPPED_VALUE;
 		});
 		excelState.columnMapping = mapping;
 	}
@@ -608,7 +640,10 @@
 		excelState.analysis = null;
 		excelState.filePath = "";
 		excelState.selectedSheet = "";
-		excelState.columnMapping = {};
+		excelState.columnMapping = requiredFields.reduce<Record<string, string>>((acc, field) => {
+			acc[field] = UNMAPPED_VALUE;
+			return acc;
+		}, {});
 		excelState.previewRows = [];
 		convertErrors.value = [];
 		natEntries.value = [];
@@ -669,10 +704,10 @@
 			excelState.analysis = analysis;
 			shouldIgnoreSheetChange.value = true;
 			excelState.selectedSheet = analysis.selectedSheet;
-			excelState.columnMapping = requiredFields.reduce<Record<string, string>>((acc, field) => {
-				acc[field] = analysis.suggestedMapping[field] ?? "";
-				return acc;
-			}, {});
+		excelState.columnMapping = requiredFields.reduce<Record<string, string>>((acc, field) => {
+			acc[field] = analysis.suggestedMapping[field] ?? UNMAPPED_VALUE;
+			return acc;
+		}, {});
 			excelState.previewRows = analysis.previewRows;
 			convertErrors.value = [];
 			natEntries.value = [];
@@ -707,20 +742,26 @@
 			});
 			return;
 		}
-		convertLoading.value = true;
-		try {
-			const selectedSheet = excelState.selectedSheet && excelState.selectedSheet.trim().length > 0
-				? excelState.selectedSheet
-				: undefined;
-			const response = await useTauriCoreInvoke<ConvertResponse>("convert_excel_to_entries", {
-				request: {
-					source: "excel",
-					file_path: excelState.filePath,
-					sheet_name: selectedSheet,
-					header_row_index: excelState.analysis.headerRowIndex,
-					column_mapping: excelState.columnMapping
-				}
-			});
+	convertLoading.value = true;
+	try {
+		const selectedSheet = excelState.selectedSheet && excelState.selectedSheet.trim().length > 0
+			? excelState.selectedSheet
+			: undefined;
+		const normalizedMapping = Object.fromEntries(
+			requiredFields.map((field) => [
+				field,
+				excelState.columnMapping[field] === UNMAPPED_VALUE ? "" : excelState.columnMapping[field]
+			])
+		);
+		const response = await useTauriCoreInvoke<ConvertResponse>("convert_excel_to_entries", {
+			request: {
+				source: "excel",
+				file_path: excelState.filePath,
+				sheet_name: selectedSheet,
+				header_row_index: excelState.analysis.headerRowIndex,
+				column_mapping: normalizedMapping
+			}
+		});
 			handleConvertResponse(response);
 			toast.add({
 				title: "Excel 数据解析成功",
@@ -743,7 +784,10 @@
 	function sanitizeManualRows(): ManualEntryRequest[] {
 		return manualRows.value
 			.map((row) => ({
-				protocol: row.protocol,
+				protocol: (() => {
+					const candidate = row.protocol.trim().toUpperCase();
+					return ["TCP", "UDP", "ICMP", "ANY"].includes(candidate) ? candidate : "TCP";
+				})(),
 				internalIp: row.internalIp.trim(),
 				internalPort: row.internalPort.trim() || undefined,
 				publicIp: row.publicIp.trim(),
@@ -816,16 +860,18 @@
 			});
 			return;
 		}
-		if (deviceType.value === "h3c") {
-			const parsed = Number(vrrpId.value);
-			if (!parsed || parsed <= 0 || parsed > 65535) {
+		let parsedVrrp: number | null = null;
+		if (deviceType.value === "h3c" && vrrpId.value.trim()) {
+			const numeric = Number(vrrpId.value);
+			if (!Number.isInteger(numeric) || numeric <= 0 || numeric > 65535) {
 				toast.add({
 					title: "VRRP ID 无效",
-					description: "H3C 模式下必须填写 1-65535 的 VRRP ID。",
+					description: "请输入 1-65535 范围内的 VRRP ID，或留空表示不配置。",
 					color: "warning"
 				});
 				return;
 			}
+			parsedVrrp = numeric;
 		}
 
 		generationLoading.value = true;
@@ -835,8 +881,8 @@
 				useElasticIp: useElasticIp.value,
 				deviceType: deviceType.value
 			};
-			if (deviceType.value === "h3c") {
-				payload.vrrpId = Number(vrrpId.value);
+			if (deviceType.value === "h3c" && parsedVrrp !== null) {
+				payload.vrrpId = parsedVrrp;
 			}
 			const result = await useTauriCoreInvoke<GenerateNatCommandsResponse>("generate_nat_commands", {
 				request: payload

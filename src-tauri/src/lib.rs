@@ -65,6 +65,7 @@ pub fn run() {
             isp_manager::get_isp_list,
             isp_manager::get_isp_data,
             isp_manager::update_isp_data,
+            isp_manager::get_isp_summary,
             isp_manager::get_next_available_elastic_ip,
             isp_manager::update_isp_from_github
         ])

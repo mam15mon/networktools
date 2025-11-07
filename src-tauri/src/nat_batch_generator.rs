@@ -551,49 +551,50 @@ fn validate_rows(rows: Vec<RawNatRow>) -> ConvertResponse {
             }
         }
 
-        let (internal_range, public_range, is_port_range) = if protocol_upper == "ANY" || protocol_upper == "ICMP" {
-            (None, None, false)
-        } else {
-            let internal_port_value = match &row.internal_port {
-                Some(value) if !value.trim().is_empty() => value.clone(),
-                _ => {
-                    row_errors.push("TCP/UDP 协议必须指定内网端口".to_string());
-                    String::new()
-                }
-            };
-            let public_port_value = match &row.public_port {
-                Some(value) if !value.trim().is_empty() => value.clone(),
-                _ => {
-                    row_errors.push("TCP/UDP 协议必须指定外网端口".to_string());
-                    String::new()
-                }
-            };
-
-            if internal_port_value.is_empty() || public_port_value.is_empty() {
+        let (internal_range, public_range, is_port_range) =
+            if protocol_upper == "ANY" || protocol_upper == "ICMP" {
                 (None, None, false)
             } else {
-                match (
-                    parse_port_range(&internal_port_value),
-                    parse_port_range(&public_port_value),
-                ) {
-                    (Ok(internal), Ok(public)) => {
-                        if internal.len() != public.len() {
-                            row_errors.push(format!(
-                                "内网端口范围({}-{})与外网端口范围({}-{})数量不匹配",
-                                internal.start, internal.end, public.start, public.end
-                            ));
+                let internal_port_value = match &row.internal_port {
+                    Some(value) if !value.trim().is_empty() => value.clone(),
+                    _ => {
+                        row_errors.push("TCP/UDP 协议必须指定内网端口".to_string());
+                        String::new()
+                    }
+                };
+                let public_port_value = match &row.public_port {
+                    Some(value) if !value.trim().is_empty() => value.clone(),
+                    _ => {
+                        row_errors.push("TCP/UDP 协议必须指定外网端口".to_string());
+                        String::new()
+                    }
+                };
+
+                if internal_port_value.is_empty() || public_port_value.is_empty() {
+                    (None, None, false)
+                } else {
+                    match (
+                        parse_port_range(&internal_port_value),
+                        parse_port_range(&public_port_value),
+                    ) {
+                        (Ok(internal), Ok(public)) => {
+                            if internal.len() != public.len() {
+                                row_errors.push(format!(
+                                    "内网端口范围({}-{})与外网端口范围({}-{})数量不匹配",
+                                    internal.start, internal.end, public.start, public.end
+                                ));
+                                (None, None, false)
+                            } else {
+                                (Some(internal), Some(public), internal.is_range())
+                            }
+                        }
+                        (Err(err), _) | (_, Err(err)) => {
+                            row_errors.push(err);
                             (None, None, false)
-                        } else {
-                            (Some(internal), Some(public), internal.is_range())
                         }
                     }
-                    (Err(err), _) | (_, Err(err)) => {
-                        row_errors.push(err);
-                        (None, None, false)
-                    }
                 }
-            }
-        };
+            };
 
         if !row_errors.is_empty() {
             errors.push(format!("{row_label}: {}", row_errors.join("；")));
@@ -725,6 +726,11 @@ fn build_huawei_command(
         Some(format!(
             "nat server {name} global {public_ip} inside {inside_ip} no-reverse"
         ))
+    } else if entry.protocol == "ICMP" {
+        let name = format!("{isp_prefix}{}{}", entry.protocol, entry.internal_ip);
+        Some(format!(
+            "nat server {name} protocol icmp global {public_ip} inside {inside_ip} no-reverse"
+        ))
     } else {
         let protocol_lower = entry.protocol.to_lowercase();
         let (internal_start, internal_end) = (
@@ -776,6 +782,15 @@ fn build_h3c_command(
         };
         Some(format!(
             "nat server global {public_ip} inside {inside_ip}{vrrp_part} description {description}"
+        ))
+    } else if entry.protocol == "ICMP" {
+        let description = format!("{isp_prefix}{}{}", entry.protocol, entry.internal_ip);
+        let vrrp_part = match vrrp_id {
+            Some(id) => format!(" vrrp {id}"),
+            None => String::new(),
+        };
+        Some(format!(
+            "nat server protocol icmp global {public_ip} inside {inside_ip}{vrrp_part} description {description}"
         ))
     } else {
         let protocol_lower = entry.protocol.to_lowercase();

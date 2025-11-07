@@ -10,7 +10,7 @@ export interface ExcelAnalysis {
 
 export interface NatEntry {
 	rowIndex: number
-	protocol: "TCP" | "UDP" | "ANY"
+	protocol: "TCP" | "UDP" | "ICMP" | "ANY"
 	internalIp: string
 	internalPortStart: number | null
 	internalPortEnd: number | null

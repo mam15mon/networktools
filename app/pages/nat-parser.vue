@@ -17,7 +17,8 @@
 				<URadioGroup
 					v-model="deviceType"
 					:items="deviceOptions"
-					class="flex gap-6"
+					orientation="horizontal"
+					class="flex flex-wrap gap-6"
 				/>
 			</UCard>
 
@@ -116,76 +117,12 @@
 						</UButton>
 					</div>
 					<UCard class="bg-(--ui-bg)">
-						<div class="overflow-x-auto">
-							<table class="w-full text-sm">
-								<thead>
-									<tr class="border-b border-(--ui-border)">
-										<th class="text-left p-3 font-medium">
-											名称
-										</th>
-										<th class="text-left p-3 font-medium">
-											协议
-										</th>
-										<th class="text-left p-3 font-medium">
-											全局IP
-										</th>
-										<th class="text-left p-3 font-medium">
-											全局端口
-										</th>
-										<th class="text-left p-3 font-medium">
-											内部IP
-										</th>
-										<th class="text-left p-3 font-medium">
-											内部端口
-										</th>
-										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">
-											VRRP
-										</th>
-										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">
-											规则
-										</th>
-										<th v-if="deviceType === 'h3c'" class="text-left p-3 font-medium">
-											描述
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr
-										v-for="(entry, index) in parseResult.successEntries"
-										:key="index"
-										class="border-b border-(--ui-border) hover:bg-(--ui-bg-muted)"
-									>
-										<td class="p-3 font-mono">
-											{{ entry.name }}
-										</td>
-										<td class="p-3">
-											{{ entry.protocol }}
-										</td>
-										<td class="p-3 font-mono">
-											{{ entry.globalIp }}
-										</td>
-										<td class="p-3 font-mono">
-											{{ entry.globalPort }}
-										</td>
-										<td class="p-3 font-mono">
-											{{ entry.insideIp }}
-										</td>
-										<td class="p-3 font-mono">
-											{{ entry.insidePort }}
-										</td>
-										<td v-if="deviceType === 'h3c'" class="p-3">
-											{{ entry.vrrp }}
-										</td>
-										<td v-if="deviceType === 'h3c'" class="p-3 font-mono">
-											{{ entry.rule }}
-										</td>
-										<td v-if="deviceType === 'h3c'" class="p-3">
-											{{ entry.description }}
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
+						<UTable
+							:columns="successColumns"
+							:data="successRows"
+							class="w-full text-sm"
+							:ui="{ td: { base: 'align-top' } }"
+						/>
 					</UCard>
 				</div>
 
@@ -314,6 +251,32 @@
 		parseResult.value.successEntries.length + parseResult.value.failedEntries.length
 	);
 
+	const successColumns = computed(() => {
+		const columns = [
+			{ accessorKey: "name", header: "名称", id: "name" },
+			{ accessorKey: "protocol", header: "协议", id: "protocol" },
+			{ accessorKey: "globalIp", header: "全局IP", id: "globalIp" },
+			{ accessorKey: "globalPort", header: "全局端口", id: "globalPort" },
+			{ accessorKey: "insideIp", header: "内部IP", id: "insideIp" },
+			{ accessorKey: "insidePort", header: "内部端口", id: "insidePort" }
+		];
+		if (deviceType.value === "h3c") {
+			columns.push(
+				{ accessorKey: "vrrp", header: "VRRP", id: "vrrp" },
+				{ accessorKey: "rule", header: "规则", id: "rule" },
+				{ accessorKey: "description", header: "描述", id: "description" }
+			);
+		}
+		return columns;
+	});
+
+	const successRows = computed(() =>
+		parseResult.value.successEntries.map((entry, index) => ({
+			...entry,
+			rowKey: `${entry.name}-${index}`
+		}))
+	);
+
 	// 处理粘贴事件
 	const handlePaste = (event: ClipboardEvent) => {
 		// 延迟一点确保粘贴内容已经更新到 v-model
@@ -377,16 +340,7 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 		parseConfig();
 	};
 
-	const isTauriEnvironment = () => {
-		if (typeof window === "undefined") return false;
-		const tauriGlobal = (window as any).__TAURI__;
-		const tauriInternal = (window as any).__TAURI_INTERNALS__;
-		if (tauriGlobal || tauriInternal) {
-			return true;
-		}
-		const ua = typeof navigator !== "undefined" ? navigator.userAgent?.toLowerCase?.() ?? "" : "";
-		return ua.includes("tauri");
-	};
+
 
 	// 处理导出点击事件
 	const handleExportClick = () => {
@@ -479,130 +433,38 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 
 	// 保存文件的通用函数
 	const saveFile = async (blob: Blob, fileName: string) => {
-		if (isTauriEnvironment()) {
-			try {
-				const { writeFile } = await import("@tauri-apps/plugin-fs");
-				const { downloadDir, join } = await import("@tauri-apps/api/path");
-
-				const downloadsPath = await downloadDir();
-				const fullPath = await join(downloadsPath, fileName);
-				const arrayBuffer = await blob.arrayBuffer();
-				await writeFile(fullPath, new Uint8Array(arrayBuffer));
-
-				// 直接打开文件
-				try {
-					const { openPath } = await import("@tauri-apps/plugin-opener");
-					await openPath(fullPath);
-				} catch (error) {
-					console.error("打开文件失败:", error);
-				}
-
-				// 显示导出成功提示
-				toast.add({
-					title: "导出成功",
-					description: `Excel 文件已保存并自动打开`,
-					icon: "i-lucide-check-circle",
-					timeout: 3000
-				});
-			} catch (error) {
-				console.error("Tauri保存失败:", error);
-				toast.add({
-					title: "导出失败",
-					description: "保存文件时发生错误，请重试。",
-					color: "red",
-					icon: "i-lucide-alert-triangle"
-				});
-			}
-		} else {
-			try {
-				// 创建下载链接
-				const url = URL.createObjectURL(blob);
-				const link = document.createElement("a");
-				link.href = url;
-				link.download = fileName;
-				link.style.display = "none";
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				URL.revokeObjectURL(url);
-
-				toast.add({
-					title: "导出成功",
-					description: `文件已下载: ${fileName}`,
-					icon: "i-lucide-check-circle",
-					timeout: 8000,
-					actions: [
-						{
-							label: "打开下载目录",
-							click: async () => {
-								try {
-									// 尝试打开下载目录
-									if (navigator.platform.toLowerCase().includes("win")) {
-										// Windows: 打开下载目录
-										window.open("shell:downloads", "_blank");
-									} else if (navigator.platform.toLowerCase().includes("mac")) {
-										// macOS: 使用 file:// 协议打开下载目录
-										window.open("file:///Users/$USER/Downloads", "_blank");
-									} else {
-										// Linux: 尝试打开下载目录
-										window.open("file:///home/$USER/Downloads", "_blank");
-									}
-
-									// 显示提示信息
-									toast.add({
-										title: "已尝试打开下载目录",
-										description: "请在浏览器中允许弹窗或手动打开下载目录",
-										icon: "i-lucide-info",
-										timeout: 5000
-									});
-								} catch (openError) {
-									console.error("打开下载目录失败:", openError);
-									toast.add({
-										title: "无法自动打开下载目录",
-										description: "请手动在浏览器中查找下载的文件",
-										icon: "i-lucide-alert-triangle",
-										timeout: 5000
-									});
-								}
-							}
-						},
-						{
-							label: "复制文件名",
-							click: async () => {
-								try {
-									// 在浏览器环境下，复制文件名到剪贴板
-									await navigator.clipboard.writeText(fileName);
-									// 显示一个简单的提示
-									toast.add({
-										title: "文件名已复制",
-										description: "请在下载目录中查找此文件",
-										timeout: 3000
-									});
-								} catch (copyError) {
-								}
-							}
-						}
-					]
-				});
-			} catch (error) {
-				console.error("浏览器下载失败:", error);
-				toast.add({
-					title: "导出失败",
-					description: "浏览器下载失败，请重试。",
-					color: "red",
-					icon: "i-lucide-alert-triangle"
-				});
-			}
+		const { save } = await import("@tauri-apps/plugin-dialog");
+		const targetPath = await save({
+			defaultPath: fileName,
+			filters: [{ name: "Excel", extensions: ["xlsx"] }]
+		});
+		if (!targetPath) {
+			return;
 		}
+
+		const arrayBuffer = await blob.arrayBuffer();
+		const { writeFile } = await import("@tauri-apps/plugin-fs");
+		await writeFile(targetPath, new Uint8Array(arrayBuffer));
+
+
+		toast.add({
+			title: "导出成功",
+			description: `文件已保存到 ${targetPath}`,
+			icon: "i-lucide-check-circle",
+			timeout: 4000
+		});
 	};
 
 	// 监听设备类型变化
 	watch(deviceType, () => {
-		// 设备类型变化时清空解析结果，但不自动解析
-		parseResult.value = {
-			successEntries: [],
-			failedEntries: [],
-			deviceType: deviceType.value
-		};
+		if (configText.value.trim()) {
+			void parseConfig();
+		} else {
+			parseResult.value = {
+				successEntries: [],
+				failedEntries: [],
+				deviceType: deviceType.value
+			};
+		}
 	});
 </script>

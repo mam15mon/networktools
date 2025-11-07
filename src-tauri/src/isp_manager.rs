@@ -427,6 +427,13 @@ pub fn update_isp_data(request: UpdateIspDataRequest) -> Result<IspUpdateResult,
 }
 
 #[tauri::command]
+pub fn get_isp_summary() -> Result<IspUpdateResult, String> {
+    let data = load_isp_data_internal()?;
+    let saved_path = resolve_paths()?.isp_data_file.display().to_string();
+    Ok(summarize_isp_data(&data, saved_path))
+}
+
+#[tauri::command]
 pub async fn update_isp_from_github() -> Result<IspUpdateResult, String> {
     let response = reqwest::get(GITHUB_ZIP_URL)
         .await
