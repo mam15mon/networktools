@@ -34,9 +34,9 @@
 
 			<div v-if="result" class="space-y-8">
 				<section class="space-y-3">
-					<UHeading :level="3" size="xl" class="font-semibold">
+					<h3 class="text-xl font-semibold">
 						输入概览
-					</UHeading>
+					</h3>
 					<p class="text-sm text-(--ui-text-muted)">
 						共解析 {{ result.normalizedInputs.length }} 条有效条目。
 					</p>
@@ -48,9 +48,9 @@
 				</section>
 
 				<section class="space-y-3">
-					<UHeading :level="3" size="xl" class="font-semibold">
+					<h3 class="text-xl font-semibold">
 						精确汇总
-					</UHeading>
+					</h3>
 					<p class="text-sm text-(--ui-text-muted)">
 						精确覆盖原始网段的最小 CIDR 集合。
 					</p>
@@ -62,9 +62,9 @@
 				</section>
 
 				<section class="space-y-3">
-					<UHeading :level="3" size="xl" class="font-semibold">
+					<h3 class="text-xl font-semibold">
 						非精确汇总
-					</UHeading>
+					</h3>
 					<p class="text-sm text-(--ui-text-muted)">
 						最小覆盖所有输入的单个 CIDR，可能包含额外地址。显示总地址数、输入地址数、额外地址数及其百分比。
 					</p>
@@ -76,9 +76,9 @@
 				</section>
 
 				<section v-if="result.errors.length" class="space-y-3">
-					<UHeading :level="3" size="xl" class="font-semibold text-(--ui-destructive)">
+					<h3 class="text-xl font-semibold text-(--ui-destructive)">
 						解析失败
-					</UHeading>
+					</h3>
 					<UAlert variant="danger" icon="i-lucide-octagon-alert">
 						<ul class="list-disc pl-4 space-y-1">
 							<li v-for="item in result.errors" :key="item">

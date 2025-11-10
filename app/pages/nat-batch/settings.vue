@@ -11,116 +11,157 @@
 					</UButton>
 				</NuxtLink>
 			</div>
+
 			<UCard class="bg-(--ui-bg)">
-			<template #header>
-				<div class="flex items-center justify-between">
+				<template #header>
 					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-cloud" class="size-5" />
-						<UHeading :level="3" size="md">
-							弹性 IP 管理
-						</UHeading>
+						<Icon name="i-lucide-globe-2" class="size-5" />
+						<h3 class="text-lg font-semibold">
+							运营商数据更新
+						</h3>
 					</div>
-					<div class="flex items-center gap-2">
-						<UBadge variant="soft" color="primary">
-							{{ elasticMappings.length }} 条映射
-						</UBadge>
+				</template>
+				<div class="space-y-4">
+					<div class="flex flex-wrap gap-3">
 						<UButton
-							variant="outline"
-							size="sm"
-							icon="i-lucide-rotate-ccw"
-							@click="loadElasticMappings"
+							:loading="ispUpdateLoading"
+							icon="i-lucide-cloud-download"
+							@click="updateIspDatabase"
 						>
-							刷新
+							从 GitHub 更新
 						</UButton>
+						<div v-if="ispSummary" class="flex flex-wrap gap-2">
+							<UBadge variant="soft" color="primary">
+								电信 {{ ispSummary.dxCount }}
+							</UBadge>
+							<UBadge variant="soft" color="primary">
+								联通 {{ ispSummary.ltCount }}
+							</UBadge>
+							<UBadge variant="soft" color="primary">
+								移动 {{ ispSummary.ydCount }}
+							</UBadge>
+							<UBadge variant="soft" color="primary">
+								其他 {{ ispSummary.otherCount }}
+							</UBadge>
+						</div>
+					</div>
+					<div v-if="ispSummary" class="text-sm text-(--ui-text-muted)">
+						数据保存位置：{{ ispSummary.savedPath }}
 					</div>
 				</div>
-			</template>
+			</UCard>
 
-			<div class="space-y-6">
-				<!-- 快速添加区域 -->
-				<div class="p-4 bg-(--ui-bg-muted) rounded-lg border border-(--ui-border)">
-					<div class="flex items-center gap-2 mb-3">
-						<Icon name="i-lucide-plus-circle" class="size-4 text-(--ui-text-muted)" />
-						<h4 class="text-sm font-semibold text-(--ui-text)">快速添加映射</h4>
-					</div>
-					<div class="grid gap-3 md:grid-cols-3">
-						<UFormField label="内部 IP" name="internalIp">
-							<UInput
-								v-model="newMapping.internalIp"
-								placeholder="192.168.1.100"
-								clearable
-								size="sm"
-							/>
-						</UFormField>
-						<UFormField label="弹性 IP" name="elasticIp">
-							<UInput
-								v-model="newMapping.elasticIp"
-								placeholder="222.240.138.4"
-								clearable
-								size="sm"
-							/>
-						</UFormField>
-						<div class="flex items-end">
+			<UCard class="bg-(--ui-bg)">
+				<template #header>
+					<div class="flex items-center justify-between">
+						<div class="flex items-center gap-2">
+							<Icon name="i-lucide-cloud" class="size-5" />
+							<h3 class="text-lg font-semibold">
+								弹性 IP 管理
+							</h3>
+						</div>
+						<div class="flex items-center gap-2">
+							<UBadge variant="soft" color="primary">
+								{{ elasticMappings.length }} 条映射
+							</UBadge>
 							<UButton
-								icon="i-lucide-plus"
-								@click="addElasticMapping"
-								class="w-full"
+								variant="outline"
 								size="sm"
+								icon="i-lucide-rotate-ccw"
+								@click="loadElasticMappings"
 							>
-								添加/更新
+								刷新
 							</UButton>
 						</div>
 					</div>
-				</div>
+				</template>
 
-				<!-- 操作工具栏 -->
-				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-						<UInput
-							v-model="searchKeyword"
-							placeholder="搜索内部 IP 或弹性 IP"
-							icon="i-lucide-search"
-							class="w-full sm:w-64"
-							clearable
-							size="sm"
-						/>
-						<div class="flex items-center gap-2">
-							<UButton
-								variant="outline"
-								color="red"
-								size="sm"
-								icon="i-lucide-trash-2"
-								:disabled="selectedInternalIps.length === 0"
-								@click="bulkDeleteMappings"
-							>
-								批量删除
-							</UButton>
-							<div v-if="selectedInternalIps.length">
-								<UBadge variant="soft" color="primary">
-									已选择 {{ selectedInternalIps.length }} 条
-								</UBadge>
+				<div class="space-y-6">
+					<!-- 快速添加区域 -->
+					<div class="p-4 bg-(--ui-bg-muted) rounded-lg border border-(--ui-border)">
+						<div class="flex items-center gap-2 mb-3">
+							<Icon name="i-lucide-plus-circle" class="size-4 text-(--ui-text-muted)" />
+							<h4 class="text-sm font-semibold text-(--ui-text)">快速添加映射</h4>
+						</div>
+						<div class="grid gap-3 md:grid-cols-3">
+							<UFormField label="内部 IP" name="internalIp">
+								<UInput
+									v-model="newMapping.internalIp"
+									placeholder="192.168.1.100"
+									clearable
+									size="sm"
+								/>
+							</UFormField>
+							<UFormField label="弹性 IP" name="elasticIp">
+								<UInput
+									v-model="newMapping.elasticIp"
+									placeholder="172.31.200.100"
+									clearable
+									size="sm"
+								/>
+							</UFormField>
+							<div class="flex items-end">
+								<UButton
+									icon="i-lucide-plus"
+									@click="addElasticMapping"
+									class="w-full"
+									size="sm"
+								>
+									添加/更新
+								</UButton>
 							</div>
 						</div>
 					</div>
-				</div>
 
-				<!-- 批量导入区域 -->
-				<div class="border border-(--ui-border) rounded-lg overflow-hidden">
-					<UAccordion
-						:items="[{
-							label: '批量导入',
-							icon: 'i-lucide-upload',
-							defaultOpen: false
-						}]"
-					>
-						<template #item>
+					<!-- 操作工具栏 -->
+					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+						<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+							<UInput
+								v-model="searchKeyword"
+								placeholder="搜索内部 IP 或弹性 IP"
+								icon="i-lucide-search"
+								class="w-full sm:w-64"
+								clearable
+								size="sm"
+							/>
+							<div class="flex items-center gap-2">
+								<UButton
+									variant="outline"
+									color="red"
+									size="sm"
+									icon="i-lucide-trash-2"
+									:disabled="selectedInternalIps.length === 0"
+									@click="bulkDeleteMappings"
+								>
+									批量删除
+								</UButton>
+								<div v-if="selectedInternalIps.length">
+									<UBadge variant="soft" color="primary">
+										已选择 {{ selectedInternalIps.length }} 条
+									</UBadge>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- 批量导入区域 -->
+					<UCollapsible class="border border-(--ui-border) rounded-lg">
+						<UButton
+							variant="ghost"
+							color="neutral"
+							class="w-full justify-start"
+							icon="i-lucide-upload"
+						>
+							批量导入
+						</UButton>
+						<template #content>
 							<div class="p-4 space-y-4 bg-(--ui-bg)">
 								<div class="space-y-3">
 									<UFormField label="映射数据" name="bulkMapping">
 										<UTextarea
 											v-model="bulkMappingInput"
 											:rows="4"
-											placeholder="按行输入映射，例如：&#10;192.168.1.100 -> 222.240.138.4&#10;192.168.1.101 -> 222.240.138.5"
+											placeholder="按行输入映射，例如：&#10;192.168.1.100 -> 172.31.200.100&#10;192.168.1.101 -> 172.31.200.101"
 										/>
 									</UFormField>
 									<div class="flex flex-wrap items-center gap-3">
@@ -142,80 +183,40 @@
 								</div>
 							</div>
 						</template>
-					</UAccordion>
-				</div>
+					</UCollapsible>
 
-				<!-- 数据表格 -->
-				<UTable
-					:columns="elasticColumns"
-					:data="filteredElasticMappings"
-					:row-key="row => row.internalIp"
-					class="w-full"
-					empty="暂无映射，请先添加。"
-				>
-					<template #select-header>
-						<div class="flex justify-center">
-							<UCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
-						</div>
-					</template>
-					<template #select-data="{ row }">
-						<div class="flex justify-center">
-							<UCheckbox
-								:model-value="selectedInternalIps.includes(row.original.internalIp)"
-								@update:model-value="updateSelection(row.original.internalIp, $event)"
-							/>
-						</div>
-					</template>
-					<template #actions-data="{ row }">
-						<div class="flex justify-center">
-							<UButton
-								variant="ghost"
-								size="xs"
-								icon="i-lucide-trash"
-								@click="removeElasticMapping(row.original.internalIp)"
-							/>
-						</div>
-					</template>
-				</UTable>
-			</div>
-		</UCard>
-
-			<UCard class="bg-(--ui-bg)">
-	<template #header>
-		<div class="flex items-center gap-2">
-			<Icon name="i-lucide-globe-2" class="size-5" />
-			<UHeading :level="3" size="md">
-				运营商数据更新
-			</UHeading>
-		</div>
-	</template>
-				<div class="space-y-4">
-					<div class="flex flex-wrap gap-3">
-						<UButton
-							:loading="ispUpdateLoading"
-							icon="i-lucide-cloud-download"
-							@click="updateIspDatabase"
-						>
-							从 GitHub 更新
-						</UButton>
-		<div v-if="ispSummary" class="flex flex-wrap gap-2">
-			<UBadge variant="soft" color="primary">
-				电信 {{ ispSummary.dxCount }}
-			</UBadge>
-			<UBadge variant="soft" color="primary">
-				联通 {{ ispSummary.ltCount }}
-			</UBadge>
-			<UBadge variant="soft" color="primary">
-				移动 {{ ispSummary.ydCount }}
-			</UBadge>
-			<UBadge variant="soft" color="primary">
-				其他 {{ ispSummary.otherCount }}
-			</UBadge>
-		</div>
-					</div>
-					<div v-if="ispSummary" class="text-sm text-(--ui-text-muted)">
-						数据保存位置：{{ ispSummary.savedPath }}
-					</div>
+					<!-- 数据表格 -->
+					<UTable
+						:columns="elasticColumns"
+						:data="filteredElasticMappings"
+						:row-key="row => row.internalIp"
+						class="w-full"
+						empty="暂无映射，请先添加。"
+					>
+						<template #select-header>
+							<div class="flex justify-center">
+								<UCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
+							</div>
+						</template>
+						<template #select-cell="{ row }">
+							<div class="flex justify-center">
+								<UCheckbox
+									:model-value="selectedInternalIps.includes(row.original.internalIp)"
+									@update:model-value="updateSelection(row.original.internalIp, $event)"
+								/>
+							</div>
+						</template>
+						<template #actions-cell="{ row }">
+							<div class="flex justify-center">
+								<UButton
+									variant="ghost"
+									size="xs"
+									icon="i-lucide-trash"
+									@click="removeElasticMapping(row.original.internalIp)"
+								/>
+							</div>
+						</template>
+					</UTable>
 				</div>
 			</UCard>
 		</div>

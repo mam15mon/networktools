@@ -12,8 +12,8 @@ export default defineAppConfig({
 			icon: "lucide:shield"
 		},
 		other: {
-			label: "其他",
-			icon: "lucide:folder"
+			label: "批量配置",
+			icon: "lucide:layers"
 		}
 	},
 	ui: {

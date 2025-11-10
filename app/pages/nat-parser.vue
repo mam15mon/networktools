@@ -9,9 +9,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-settings" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						设备类型
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<URadioGroup
@@ -27,9 +27,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-terminal" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						NAT Server 配置
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<div class="space-y-4">
@@ -105,9 +105,9 @@
 				<!-- 成功解析的条目 -->
 				<div v-if="parseResult.successEntries.length > 0">
 				<div class="flex justify-between items-center mb-4">
-					<UHeading :level="3" size="xl" class="font-semibold">
+					<h3 class="text-xl font-semibold">
 						解析结果
-					</UHeading>
+					</h3>
 						<UButton
 							icon="i-lucide-download"
 							:disabled="parseResult.successEntries.length === 0"
@@ -128,9 +128,9 @@
 
 				<!-- 解析失败的条目 -->
 			<div v-if="parseResult.failedEntries.length > 0">
-				<UHeading :level="3" size="xl" class="mb-4 font-semibold text-red-600">
+				<h3 class="text-xl mb-4 font-semibold text-red-600">
 					解析失败条目
-				</UHeading>
+				</h3>
 					<UCard class="bg-(--ui-bg-muted) border-(--ui-border)">
 						<div class="space-y-2">
 							<div
@@ -150,9 +150,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-help-circle" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						使用说明
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<div class="space-y-4 text-sm">

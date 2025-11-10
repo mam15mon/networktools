@@ -8,9 +8,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-shield-check" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						认证策略
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<div class="space-y-4">
@@ -39,9 +39,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-file-spreadsheet" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						Excel 数据
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<div class="space-y-6">
@@ -64,9 +64,9 @@
 				<div v-if="excelState.analysis" class="space-y-4">
 				<div class="space-y-2">
 					<div class="flex items-center justify-between">
-						<UHeading :level="4" size="md" class="font-semibold">
+						<h4 class="text-base font-semibold">
 							数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
-						</UHeading>
+						</h4>
 							</div>
 							<UTable
 								:columns="excelPreviewColumns"
@@ -94,9 +94,9 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-table" class="size-5" />
-						<UHeading :level="3" size="lg" class="font-semibold">
+						<h3 class="text-lg font-semibold">
 							数据校验结果
-						</UHeading>
+						</h3>
 					</div>
 				</template>
 				<div class="space-y-4">
@@ -140,9 +140,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-terminal" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						配置输出
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<div class="space-y-4">
@@ -158,20 +158,19 @@
 						</UButton>
 					</div>
 
-					<div v-if="generatedConfigs.length" class="space-y-3">
-						<p class="text-sm text-(--ui-text-muted)">
-							预览前 {{ Math.min(generatedConfigs.length, 5) }} 台设备：
-						</p>
-						<UTable
-							:columns="configPreviewColumns"
-							:data="configPreviewRows"
-							class="w-full"
-						>
-							<template #config-data="{ row }">
-								<pre class="bg-(--ui-bg-muted) rounded p-3 text-xs whitespace-pre-wrap">{{ row.config }}</pre>
-							</template>
-						</UTable>
-					</div>
+		<div v-if="generatedConfigs.length" class="space-y-3">
+			<p class="text-sm text-(--ui-text-muted)">
+				预览前 {{ Math.min(generatedConfigs.length, 5) }} 台设备：
+			</p>
+			<ConfigDeviceCards
+				:items="configPreviewItems"
+				:limit="5"
+				empty-message="生成结果将显示在此处。"
+			/>
+		</div>
+				<div v-else class="rounded-lg border border-dashed border-(--ui-border) p-4 text-sm text-(--ui-text-muted)">
+					生成结果将显示在此处。
+				</div>
 				</div>
 			</UCard>
 		</div>
@@ -181,6 +180,7 @@
 <script lang="ts" setup>
 import { computed, reactive, ref, watch } from "vue";
 import LayoutTile from "~/components/Layout/Tile.vue";
+import ConfigDeviceCards from "~/components/Config/DeviceCards.vue";
 import type { ConvertResponse, ExcelAnalysis, VsrEntry, VsrGeneratedConfig } from "~/types/vsr-batch";
 import { extractErrorMessage } from "~/utils/error";
 
@@ -254,12 +254,12 @@ const entryPreviewColumns = [
 
 const entryPreviewRows = computed(() => vsrEntries.value.slice(0, 10));
 
-const configPreviewColumns = [
-	{ id: "deviceName", header: "设备", accessorKey: "deviceName" },
-	{ id: "config", header: "配置", accessorKey: "config" }
-];
-
-const configPreviewRows = computed(() => generatedConfigs.value.slice(0, 5));
+const configPreviewItems = computed(() =>
+	generatedConfigs.value.map((item) => ({
+		label: item.deviceName,
+		config: item.config
+	}))
+);
 
 async function handleSelectExcel() {
 	try {

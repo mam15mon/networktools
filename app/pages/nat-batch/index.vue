@@ -8,9 +8,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-merge" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						数据来源
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<div class="space-y-3">
@@ -31,9 +31,9 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-file-spreadsheet" class="size-5" />
-						<UHeading :level="3" size="lg" class="font-semibold">
+						<h3 class="text-lg font-semibold">
 							Excel 数据
-						</UHeading>
+						</h3>
 					</div>
 					</template>
 					<div class="space-y-6">
@@ -68,9 +68,9 @@
 
 					<div class="space-y-3">
 						<div class="flex flex-wrap items-center justify-between gap-3">
-							<UHeading :level="4" size="md" class="font-semibold">
+							<h4 class="text-base font-semibold">
 								列映射
-							</UHeading>
+							</h4>
 								<UButton
 									variant="soft"
 									size="sm"
@@ -113,9 +113,9 @@
 
 						<div class="space-y-2">
 							<div class="flex items-center justify-between">
-								<UHeading :level="4" size="md" class="font-semibold">
+								<h4 class="text-base font-semibold">
 									数据预览（{{ excelState.analysis.totalRows }} 行，展示前 {{ previewRows.length }} 行）
-								</UHeading>
+								</h4>
 								</div>
 								<UTable
 									:columns="excelPreviewColumns"
@@ -153,9 +153,9 @@
 				<template #header>
 					<div class="flex items-center gap-2">
 						<Icon name="i-lucide-clipboard-list" class="size-5" />
-						<UHeading :level="3" size="lg" class="font-semibold">
+						<h3 class="text-lg font-semibold">
 							手动录入 DNAT 需求
-						</UHeading>
+						</h3>
 					</div>
 					</template>
 					<div class="space-y-4">
@@ -270,9 +270,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-table" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						数据校验结果
-					</UHeading>
+					</h3>
 				</div>
 				</template>
 				<div class="space-y-4">
@@ -336,9 +336,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-sliders-horizontal" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						设备与输出选项
-					</UHeading>
+					</h3>
 				</div>
 			</template>
 
@@ -439,9 +439,9 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<Icon name="i-lucide-terminal" class="size-5" />
-					<UHeading :level="3" size="lg" class="font-semibold">
+					<h3 class="text-lg font-semibold">
 						NAT 命令输出
-					</UHeading>
+					</h3>
 				</div>
 			</template>
 			<div class="space-y-4">

@@ -35,16 +35,16 @@
 
 			<div v-if="result" class="space-y-8">
 				<section class="space-y-4">
-					<UHeading :level="3" size="xl" class="font-semibold">
+					<h3 class="text-xl font-semibold">
 						结果概览
-					</UHeading>
+					</h3>
 					<UTable :data="summaryRows" :columns="summaryColumns" :ui="tableUi" />
 				</section>
 
 				<section class="space-y-4">
-					<UHeading :level="3" size="xl" class="font-semibold">
+					<h3 class="text-xl font-semibold">
 						同类子网列表
-					</UHeading>
+					</h3>
 					<p class="text-sm text-(--ui-text-muted)">
 						依据掩码粒度展示同类子网完整列表。
 					</p>

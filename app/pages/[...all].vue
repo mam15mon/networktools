@@ -5,9 +5,9 @@
 				404
 			</p>
 			<div class="text-center space-y-3">
-				<UHeading :level="1" size="3xl" class="font-bold tracking-tight" sm="text-5xl">
+				<h1 class="text-3xl font-bold tracking-tight sm:text-5xl">
 					Page not found
-				</UHeading>
+				</h1>
 				<p class="text-base text-(--ui-muted) leading-7">
 					Sorry, we couldn't find the page you're looking for.
 				</p>
