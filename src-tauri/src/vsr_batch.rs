@@ -29,12 +29,32 @@ const VSR_FIELDS: &[FieldMeta] = &[
     FieldMeta::new("ppp_username", "PPP 本地用户", false, FieldCategory::Local),
     FieldMeta::new("ppp_password", "PPP 密码", false, FieldCategory::Local),
     FieldMeta::new("pool_cidr", "地址池 CIDR", true, FieldCategory::Core),
-    FieldMeta::new("ldap_server_ip", "LDAP 服务器 IP", false, FieldCategory::Ldap),
+    FieldMeta::new(
+        "ldap_server_ip",
+        "LDAP 服务器 IP",
+        false,
+        FieldCategory::Ldap,
+    ),
     FieldMeta::new("ldap_login_dn", "LDAP Login DN", false, FieldCategory::Ldap),
-    FieldMeta::new("ldap_search_base_dn", "LDAP Search Base DN", false, FieldCategory::Ldap),
+    FieldMeta::new(
+        "ldap_search_base_dn",
+        "LDAP Search Base DN",
+        false,
+        FieldCategory::Ldap,
+    ),
     FieldMeta::new("ldap_password", "LDAP 密码", false, FieldCategory::Ldap),
-    FieldMeta::new("radius_ip", "Radius 服务器 IP", false, FieldCategory::Radius),
-    FieldMeta::new("radius_password", "Radius 密码", false, FieldCategory::Radius),
+    FieldMeta::new(
+        "radius_ip",
+        "Radius 服务器 IP",
+        false,
+        FieldCategory::Radius,
+    ),
+    FieldMeta::new(
+        "radius_password",
+        "Radius 密码",
+        false,
+        FieldCategory::Radius,
+    ),
 ];
 
 const COLUMN_PATTERNS: &[(&str, &[&str])] = &[
@@ -43,10 +63,7 @@ const COLUMN_PATTERNS: &[(&str, &[&str])] = &[
         &["device", "device_name", "name", "设备", "设备名称", "主机"],
     ),
     ("ip", &["ip", "接口ip", "vsr_ip", "管理ip", "address"]),
-    (
-        "gateway",
-        &["gateway", "gw", "默认网关", "出口", "下一跳"],
-    ),
+    ("gateway", &["gateway", "gw", "默认网关", "出口", "下一跳"]),
     (
         "pool_cidr",
         &["pool_cidr", "cidr", "地址池", "地址池cidr", "pool"],
@@ -67,14 +84,8 @@ const COLUMN_PATTERNS: &[(&str, &[&str])] = &[
         "monitor_password",
         &["monitor_password", "monitor_pwd", "监控密码"],
     ),
-    (
-        "ppp_username",
-        &["ppp_username", "ppp用户", "local_ppp"],
-    ),
-    (
-        "ppp_password",
-        &["ppp_password", "ppp_pwd", "ppp密码"],
-    ),
+    ("ppp_username", &["ppp_username", "ppp用户", "local_ppp"]),
+    ("ppp_password", &["ppp_password", "ppp_pwd", "ppp密码"]),
     (
         "ldap_server_ip",
         &["ldap_server_ip", "ldap_ip", "ldap服务器"],
@@ -87,14 +98,8 @@ const COLUMN_PATTERNS: &[(&str, &[&str])] = &[
         "ldap_search_base_dn",
         &["ldap_search_base_dn", "search_dn", "search_base"],
     ),
-    (
-        "ldap_password",
-        &["ldap_password", "ldap_pwd", "ldap密码"],
-    ),
-    (
-        "radius_ip",
-        &["radius_ip", "radius", "radius服务器"],
-    ),
+    ("ldap_password", &["ldap_password", "ldap_pwd", "ldap密码"]),
+    ("radius_ip", &["radius_ip", "radius", "radius服务器"]),
     (
         "radius_password",
         &["radius_password", "radius_pwd", "radius密码"],
@@ -242,9 +247,7 @@ pub fn export_vsr_template(request: ExportVsrTemplateRequest) -> Result<(), Stri
     };
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
-    let header_format = Format::new()
-        .set_bold()
-        .set_align(FormatAlign::Center);
+    let header_format = Format::new().set_bold().set_align(FormatAlign::Center);
 
     let mut col_index: u16 = 0;
     for field in VSR_FIELDS.iter() {
@@ -265,9 +268,12 @@ pub fn export_vsr_template(request: ExportVsrTemplateRequest) -> Result<(), Stri
 
 #[tauri::command]
 pub fn process_vsr_excel(request: ProcessExcelRequest) -> Result<ExcelAnalysis, String> {
-    let ProcessExcelRequest { file_path, sheet_name } = request;
-    let mut workbook = open_workbook_auto(&file_path)
-        .map_err(|err| format!("无法打开 Excel 文件: {err}"))?;
+    let ProcessExcelRequest {
+        file_path,
+        sheet_name,
+    } = request;
+    let mut workbook =
+        open_workbook_auto(&file_path).map_err(|err| format!("无法打开 Excel 文件: {err}"))?;
 
     let sheet_names = workbook.sheet_names().to_vec();
     if sheet_names.is_empty() {
@@ -282,8 +288,8 @@ pub fn process_vsr_excel(request: ProcessExcelRequest) -> Result<ExcelAnalysis, 
         .worksheet_range(&selected)
         .map_err(|err| format!("读取工作表失败: {err}"))?;
 
-    let header_row_index = detect_header_row(&range)
-        .ok_or_else(|| "无法定位表头行，请检查 Excel 格式".to_string())?;
+    let header_row_index =
+        detect_header_row(&range).ok_or_else(|| "无法定位表头行，请检查 Excel 格式".to_string())?;
 
     let columns = range
         .rows()
@@ -312,8 +318,8 @@ pub fn convert_vsr_entries(request: ConvertVsrRequest) -> Result<ConvertResponse
         header_row_index,
     } = request;
 
-    let mut workbook = open_workbook_auto(&file_path)
-        .map_err(|err| format!("无法打开 Excel 文件: {err}"))?;
+    let mut workbook =
+        open_workbook_auto(&file_path).map_err(|err| format!("无法打开 Excel 文件: {err}"))?;
     let sheet_names = workbook.sheet_names().to_vec();
     let selected = sheet_name
         .filter(|name| sheet_names.contains(name))
@@ -566,10 +572,7 @@ fn extract_rows(
             pool_cidr: normalize_optional(values.get("pool_cidr")),
             start_ip: values.get("start_ip").cloned().unwrap_or_default(),
             end_ip: values.get("end_ip").cloned().unwrap_or_default(),
-            pool_ip_gateway: values
-                .get("pool_ip_gateway")
-                .cloned()
-                .unwrap_or_default(),
+            pool_ip_gateway: values.get("pool_ip_gateway").cloned().unwrap_or_default(),
             ldap_server_ip: normalize_optional(values.get("ldap_server_ip")),
             ldap_login_dn: normalize_optional(values.get("ldap_login_dn")),
             ldap_search_base_dn: normalize_optional(values.get("ldap_search_base_dn")),
@@ -581,8 +584,7 @@ fn extract_rows(
     }
 
     for row in rows.iter_mut() {
-        if let Some(cidr) = row.pool_cidr.clone()
-        {
+        if let Some(cidr) = row.pool_cidr.clone() {
             if !row.start_ip.trim().is_empty()
                 && !row.end_ip.trim().is_empty()
                 && !row.pool_ip_gateway.trim().is_empty()

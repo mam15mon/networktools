@@ -1,14 +1,29 @@
 use calamine::{open_workbook_auto, Data, Range, Reader};
-use rust_xlsxwriter::{Format, FormatAlign, Workbook};
+use rust_xlsxwriter::{Color, Format, FormatAlign, Workbook};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Number, Value};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use tera::ast;
 use tera::Context;
 use tera::Template;
 
 const MAX_PREVIEW_ROWS: usize = 100;
+const CONDITIONAL_COLOR: Color = Color::RGB(0xD6EAF8);
+const DEFAULT_COLOR: Color = Color::RGB(0xFCF3CF);
+const FORMATTING_COLOR: Color = Color::RGB(0xE8DAEF);
+const FORMATTING_FILTERS: &[&str] = &[
+    "upper",
+    "lower",
+    "capitalize",
+    "title",
+    "trim",
+    "trim_end",
+    "trim_start",
+    "slice",
+    "replace",
+    "escape",
+];
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -23,6 +38,16 @@ pub struct TeraTemplateAnalysis {
     pub variable_count: usize,
     pub has_loops: bool,
     pub has_conditionals: bool,
+    pub loop_count: usize,
+    pub conditional_count: usize,
+    #[serde(default)]
+    pub iterable_variables: Vec<String>,
+    #[serde(default)]
+    pub sample_values: HashMap<String, Vec<String>>,
+    #[serde(default)]
+    pub default_fallbacks: HashMap<String, String>,
+    #[serde(default)]
+    pub filter_usage: HashMap<String, Vec<String>>,
 }
 
 #[derive(Deserialize)]
@@ -30,6 +55,14 @@ pub struct TeraTemplateAnalysis {
 pub struct ExportTeraTemplateRequest {
     pub path: String,
     pub variables: Vec<String>,
+    #[serde(default)]
+    pub iterable_variables: Vec<String>,
+    #[serde(default)]
+    pub sample_values: HashMap<String, Vec<String>>,
+    #[serde(default)]
+    pub default_fallbacks: HashMap<String, String>,
+    #[serde(default)]
+    pub filter_usage: HashMap<String, Vec<String>>,
 }
 
 #[derive(Deserialize)]
@@ -38,6 +71,8 @@ pub struct PreviewTemplateExcelRequest {
     pub file_path: String,
     pub sheet_name: Option<String>,
     pub expected_variables: Vec<String>,
+    #[serde(default)]
+    pub iterable_variables: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -49,6 +84,9 @@ pub struct TemplateExcelPreview {
     pub columns: Vec<String>,
     pub preview_rows: Vec<Vec<String>>,
     pub total_rows: usize,
+    pub columns_with_data: Vec<String>,
+    #[serde(default)]
+    pub invalid_iterable_columns: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -59,6 +97,8 @@ pub struct GenerateTemplateConfigsRequest {
     pub sheet_name: Option<String>,
     pub expected_variables: Vec<String>,
     pub label_field: Option<String>,
+    #[serde(default)]
+    pub iterable_variables: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -86,12 +126,39 @@ pub fn analyze_tera_template(
 
     let variables = result.variables;
     let variable_count = variables.len();
+    let mut iterable_variables: Vec<String> = result.iterable_variables.into_iter().collect();
+    iterable_variables.sort();
+    let sample_values = result
+        .sample_values
+        .into_iter()
+        .map(|(key, values)| {
+            let mut list: Vec<String> = values.into_iter().collect();
+            list.sort();
+            (key, list)
+        })
+        .collect();
+    let default_fallbacks = result.default_fallbacks.into_iter().collect();
+    let filter_usage = result
+        .filter_usage
+        .into_iter()
+        .map(|(key, set)| {
+            let mut list: Vec<String> = set.into_iter().collect();
+            list.sort();
+            (key, list)
+        })
+        .collect();
 
     Ok(TeraTemplateAnalysis {
         variable_count,
         variables,
         has_loops: result.has_loops,
         has_conditionals: result.has_conditionals,
+        loop_count: result.loop_count,
+        conditional_count: result.conditional_count,
+        iterable_variables,
+        sample_values,
+        default_fallbacks,
+        filter_usage,
     })
 }
 
@@ -103,13 +170,31 @@ pub fn export_tera_variable_template(request: ExportTeraTemplateRequest) -> Resu
 
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
-    let header_format = Format::new().set_bold().set_align(FormatAlign::Center);
+    let base_header_format = Format::new().set_bold().set_align(FormatAlign::Center);
+    let base_sample_format = Format::new()
+        .set_align(FormatAlign::Left)
+        .set_text_wrap();
 
     for (col, variable) in request.variables.iter().enumerate() {
+        let classification = classify_column(variable, &request);
+        let header_format = build_colored_format(&base_header_format, &classification);
         worksheet
             .write_with_format(0, col as u16, variable, &header_format)
             .map_err(|err| err.to_string())?;
+        let sample_value = compose_sample_value(
+            variable,
+            &classification,
+            &request.sample_values,
+            &request.default_fallbacks,
+        );
+        let sample_format = build_colored_format(&base_sample_format, &classification);
+        worksheet
+            .write_with_format(1, col as u16, &sample_value, &sample_format)
+            .map_err(|err| err.to_string())?;
     }
+
+    write_color_legend(&mut workbook, &request)
+        .map_err(|err| err.to_string())?;
 
     workbook
         .save(request.path)
@@ -141,7 +226,37 @@ pub fn preview_template_excel(
 
     validate_columns(&columns, &request.expected_variables)?;
 
-    let (preview_rows, total_rows) = collect_preview_rows(&range, header_row_index);
+    let column_count = columns.len();
+    let (preview_rows, total_rows, column_non_empty_counts) =
+        collect_preview_rows(&range, header_row_index, column_count);
+    let columns_with_data = columns
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, name)| {
+            if column_non_empty_counts
+                .get(idx)
+                .copied()
+                .unwrap_or_default()
+                > 0
+            {
+                Some(name.clone())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let invalid_iterable_columns = request
+        .iterable_variables
+        .iter()
+        .filter_map(|variable| {
+            let idx = find_column_index(&columns, variable)?;
+            match assess_iterable_column(&range, header_row_index, idx) {
+                IterableColumnState::Invalid => Some(variable.clone()),
+                _ => None,
+            }
+        })
+        .collect();
 
     Ok(TemplateExcelPreview {
         sheet_names,
@@ -150,6 +265,8 @@ pub fn preview_template_excel(
         columns,
         preview_rows,
         total_rows,
+        columns_with_data,
+        invalid_iterable_columns,
     })
 }
 
@@ -238,6 +355,13 @@ pub fn generate_template_configs(
             ensure_path(&mut root, segments);
         }
 
+        ensure_iterable_columns_are_structured(
+            &root,
+            &parsed_columns,
+            &request.iterable_variables,
+        )
+        .map_err(|err| format!("第 {} 行: {err}", row_index + 1))?;
+
         let label = label_segments
             .as_ref()
             .and_then(|segments| extract_value(&root, segments))
@@ -295,6 +419,12 @@ struct AnalysisResult {
     seen: HashSet<String>,
     has_loops: bool,
     has_conditionals: bool,
+    loop_count: usize,
+    conditional_count: usize,
+    iterable_variables: HashSet<String>,
+    sample_values: HashMap<String, HashSet<String>>,
+    default_fallbacks: HashMap<String, String>,
+    filter_usage: HashMap<String, HashSet<String>>,
 }
 
 #[derive(Default, Clone)]
@@ -337,8 +467,10 @@ fn collect_from_nodes(nodes: &[ast::Node], scope: &mut Scope, result: &mut Analy
             ast::Node::VariableBlock(_, expr) => collect_from_expr(expr, scope, result),
             ast::Node::If(if_block, _) => {
                 result.has_conditionals = true;
+                result.conditional_count += 1;
                 for (_, expr, body) in &if_block.conditions {
                     collect_from_expr(expr, scope, result);
+                    collect_condition_samples(expr, scope, result);
                     collect_from_nodes(body, scope, result);
                 }
                 if let Some((_, body)) = &if_block.otherwise {
@@ -347,7 +479,11 @@ fn collect_from_nodes(nodes: &[ast::Node], scope: &mut Scope, result: &mut Analy
             }
             ast::Node::Forloop(_, forloop, _) => {
                 result.has_loops = true;
+                result.loop_count += 1;
                 collect_from_expr(&forloop.container, scope, result);
+                if let Some(container) = extract_expr_ident(&forloop.container) {
+                    result.iterable_variables.insert(container);
+                }
                 let mut locals = vec![forloop.value.clone(), "loop".to_string()];
                 if let Some(key) = &forloop.key {
                     locals.push(key.clone());
@@ -442,11 +578,78 @@ fn collect_from_expr(expr: &ast::Expr, scope: &Scope, result: &mut AnalysisResul
     for filter in &expr.filters {
         collect_from_fn_call(filter, scope, result);
     }
+
+    record_filter_metadata(expr, scope, result);
 }
 
 fn collect_from_fn_call(call: &ast::FunctionCall, scope: &Scope, result: &mut AnalysisResult) {
     for expr in call.args.values() {
         collect_from_expr(expr, scope, result);
+    }
+}
+
+fn record_filter_metadata(expr: &ast::Expr, scope: &Scope, result: &mut AnalysisResult) {
+    let ident = match extract_full_ident(expr) {
+        Some(ident) => ident,
+        None => return,
+    };
+    if scope.is_local(&ident) {
+        return;
+    }
+    if expr.filters.is_empty() {
+        return;
+    }
+    for filter in &expr.filters {
+        result
+            .filter_usage
+            .entry(ident.clone())
+            .or_insert_with(HashSet::new)
+            .insert(filter.name.clone());
+        if filter.name == "default" {
+            if let Some(description) = describe_default_filter(filter) {
+                result.default_fallbacks.insert(ident.clone(), description);
+            }
+        }
+    }
+}
+
+fn collect_condition_samples(expr: &ast::Expr, scope: &Scope, result: &mut AnalysisResult) {
+    match &expr.val {
+        ast::ExprVal::Logic(logic) => match logic.operator {
+            ast::LogicOperator::And | ast::LogicOperator::Or => {
+                collect_condition_samples(&logic.lhs, scope, result);
+                collect_condition_samples(&logic.rhs, scope, result);
+            }
+            ast::LogicOperator::Eq | ast::LogicOperator::NotEq => {
+                record_logic_sample(&logic.lhs, &logic.rhs, scope, result);
+                record_logic_sample(&logic.rhs, &logic.lhs, scope, result);
+            }
+            _ => {
+                collect_condition_samples(&logic.lhs, scope, result);
+                collect_condition_samples(&logic.rhs, scope, result);
+            }
+        },
+        ast::ExprVal::In(in_expr) => {
+            if let Some(ident) = extract_full_ident(&in_expr.lhs) {
+                if scope.is_local(&ident) {
+                    return;
+                }
+                if let Some(values) = extract_array_literals(&in_expr.rhs) {
+                    for value in values {
+                        record_sample(&ident, value, result);
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn extract_expr_ident(expr: &ast::Expr) -> Option<String> {
+    if let ast::ExprVal::Ident(ident) = &expr.val {
+        Some(extract_ident_root(ident))
+    } else {
+        None
     }
 }
 
@@ -459,12 +662,102 @@ fn record_identifier(ident: &str, scope: &Scope, result: &mut AnalysisResult) {
     }
 }
 
+fn record_sample(ident: &str, value: String, result: &mut AnalysisResult) {
+    result
+        .sample_values
+        .entry(ident.to_string())
+        .or_insert_with(HashSet::new)
+        .insert(value);
+}
+
 fn extract_ident_root(ident: &str) -> String {
     ident
         .split(|c| c == '.' || c == '[')
         .next()
         .unwrap_or(ident)
         .to_string()
+}
+
+fn extract_full_ident(expr: &ast::Expr) -> Option<String> {
+    if expr.negated {
+        return None;
+    }
+    if let ast::ExprVal::Ident(ident) = &expr.val {
+        Some(ident.clone())
+    } else {
+        None
+    }
+}
+
+fn record_logic_sample(lhs: &ast::Expr, rhs: &ast::Expr, scope: &Scope, result: &mut AnalysisResult) {
+    let ident = match extract_full_ident(lhs) {
+        Some(ident) => ident,
+        None => return,
+    };
+    if scope.is_local(&ident) {
+        return;
+    }
+    if let Some(value) = literal_expr_to_string(rhs) {
+        record_sample(&ident, value, result);
+    }
+}
+
+fn literal_expr_to_string(expr: &ast::Expr) -> Option<String> {
+    if expr.negated {
+        return None;
+    }
+    match &expr.val {
+        ast::ExprVal::String(value) => Some(value.clone()),
+        ast::ExprVal::Int(value) => Some(value.to_string()),
+        ast::ExprVal::Float(value) => {
+            let text = value.to_string();
+            Some(trim_trailing_zeros(&text).unwrap_or(text))
+        }
+        ast::ExprVal::Bool(value) => Some(value.to_string()),
+        _ => None,
+    }
+}
+
+fn extract_array_literals(expr: &ast::Expr) -> Option<Vec<String>> {
+    if expr.negated {
+        return None;
+    }
+    if let ast::ExprVal::Array(values) = &expr.val {
+        let mut literals = Vec::new();
+        for value in values {
+            if let Some(text) = literal_expr_to_string(value) {
+                literals.push(text);
+            } else {
+                return None;
+            }
+        }
+        Some(literals)
+    } else {
+        None
+    }
+}
+
+fn describe_default_filter(call: &ast::FunctionCall) -> Option<String> {
+    if call.args.is_empty() {
+        return None;
+    }
+    if let Some(expr) = call.args.get("value") {
+        return describe_default_argument(expr);
+    }
+    if let Some(expr) = call.args.get("_0") {
+        return describe_default_argument(expr);
+    }
+    if let Some((_, expr)) = call.args.iter().next() {
+        return describe_default_argument(expr);
+    }
+    None
+}
+
+fn describe_default_argument(expr: &ast::Expr) -> Option<String> {
+    if let Some(ident) = extract_full_ident(expr) {
+        return Some(ident);
+    }
+    literal_expr_to_string(expr)
 }
 
 fn find_header_row(range: &Range<Data>) -> Option<(usize, Vec<String>)> {
@@ -498,9 +791,180 @@ fn columns_present(columns: &[String], target: &str) -> bool {
     columns.iter().any(|column| column.trim() == target.trim())
 }
 
-fn collect_preview_rows(range: &Range<Data>, header_row_index: usize) -> (Vec<Vec<String>>, usize) {
+fn find_column_index(columns: &[String], target: &str) -> Option<usize> {
+    let normalized = target.trim();
+    columns
+        .iter()
+        .position(|column| column.trim() == normalized)
+}
+
+fn column_segments<'a>(
+    parsed_columns: &'a [(String, Vec<PathSegment>)],
+    target: &str,
+) -> Option<&'a [PathSegment]> {
+    let normalized = target.trim();
+    parsed_columns
+        .iter()
+        .find(|(name, _)| name.trim() == normalized)
+        .map(|(_, segments)| segments.as_slice())
+}
+
+fn is_iterable_variable(name: &str, iterable_variables: &[String]) -> bool {
+    let normalized = name.trim();
+    iterable_variables
+        .iter()
+        .any(|item| item.trim() == normalized)
+}
+
+struct ColumnClassification {
+    is_iterable: bool,
+    conditional: bool,
+    defaultable: bool,
+    formatting: bool,
+}
+
+fn classify_column(name: &str, request: &ExportTeraTemplateRequest) -> ColumnClassification {
+    ColumnClassification {
+        is_iterable: is_iterable_variable(name, &request.iterable_variables),
+        conditional: request
+            .sample_values
+            .get(name)
+            .map(|values| !values.is_empty())
+            .unwrap_or(false),
+        defaultable: request.default_fallbacks.contains_key(name),
+        formatting: is_pure_formatting(name, &request.filter_usage),
+    }
+}
+
+fn is_pure_formatting(name: &str, filter_usage: &HashMap<String, Vec<String>>) -> bool {
+    let filters = match filter_usage.get(name) {
+        Some(list) => list,
+        None => return false,
+    };
+    if filters.is_empty() {
+        return false;
+    }
+    filters.iter().all(|filter| {
+        FORMATTING_FILTERS
+            .iter()
+            .any(|allowed| *allowed == filter.as_str())
+    })
+}
+
+fn build_colored_format(base: &Format, classification: &ColumnClassification) -> Format {
+    if let Some(color) = column_color(classification) {
+        base.clone().set_background_color(color)
+    } else {
+        base.clone()
+    }
+}
+
+fn column_color(classification: &ColumnClassification) -> Option<Color> {
+    if classification.defaultable {
+        Some(DEFAULT_COLOR)
+    } else if classification.conditional {
+        Some(CONDITIONAL_COLOR)
+    } else if classification.formatting {
+        Some(FORMATTING_COLOR)
+    } else {
+        None
+    }
+}
+
+fn compose_sample_value(
+    name: &str,
+    classification: &ColumnClassification,
+    sample_values: &HashMap<String, Vec<String>>,
+    default_fallbacks: &HashMap<String, String>,
+) -> String {
+    if classification.is_iterable {
+        return format!(
+            "[{{\"id\":1,\"name\":\"{}示例\",\"ip\":\"10.0.0.1\",\"mask\":\"255.255.255.0\"}}]",
+            name
+        );
+    }
+
+    let samples = sample_values.get(name);
+    let default_hint = default_fallbacks.get(name);
+
+    if let Some(default_hint) = default_hint {
+        if let Some(values) = samples {
+            if !values.is_empty() {
+                return format!(
+                    "可选：{}；默认 {}",
+                    format_examples(values),
+                    default_hint
+                );
+            }
+        }
+        return format!("默认 {}，可留空", default_hint);
+    }
+
+    if let Some(values) = samples {
+        if !values.is_empty() {
+            return format_examples(values);
+        }
+    }
+
+    if classification.formatting {
+        return format!("{} 示例值（自动格式化）", name);
+    }
+
+    format!("{} 示例值", name)
+}
+
+fn write_color_legend(
+    workbook: &mut Workbook,
+    _request: &ExportTeraTemplateRequest,
+) -> Result<(), rust_xlsxwriter::XlsxError> {
+    let legend_sheet = workbook.add_worksheet();
+    legend_sheet.set_name("颜色说明")?;
+
+    let title_format = Format::new().set_bold();
+    legend_sheet.write_with_format(0, 0, "颜色说明", &title_format)?;
+
+    let conditional_format = Format::new()
+        .set_background_color(CONDITIONAL_COLOR)
+        .set_align(FormatAlign::Left);
+    legend_sheet.write_with_format(
+        1,
+        0,
+        "浅蓝：参与 if/elif 条件判断的变量",
+        &conditional_format,
+    )?;
+
+    let default_format = Format::new()
+        .set_background_color(DEFAULT_COLOR)
+        .set_align(FormatAlign::Left);
+    legend_sheet.write_with_format(
+        2,
+        0,
+        "浅黄：支持 default 回退，可留空",
+        &default_format,
+    )?;
+
+    let formatting_format = Format::new()
+        .set_background_color(FORMATTING_COLOR)
+        .set_align(FormatAlign::Left);
+    legend_sheet.write_with_format(
+        3,
+        0,
+        "浅紫：仅包含格式化过滤器（upper/capitalize 等）",
+        &formatting_format,
+    )?;
+
+    Ok(())
+}
+
+fn collect_preview_rows(
+    range: &Range<Data>,
+    header_row_index: usize,
+    column_count: usize,
+) -> (Vec<Vec<String>>, usize, Vec<usize>) {
     let mut preview_rows = Vec::new();
     let mut total_rows = 0usize;
+    let mut column_non_empty_counts = vec![0usize; column_count];
+
     for (idx, row) in range.rows().enumerate() {
         if idx <= header_row_index {
             continue;
@@ -509,12 +973,72 @@ fn collect_preview_rows(range: &Range<Data>, header_row_index: usize) -> (Vec<Ve
             continue;
         }
         total_rows += 1;
-        if preview_rows.len() >= MAX_PREVIEW_ROWS {
+
+        if preview_rows.len() < MAX_PREVIEW_ROWS {
+            let mut formatted_row = Vec::with_capacity(column_count);
+            for col_idx in 0..column_count {
+                let value = row
+                    .get(col_idx)
+                    .map(|cell| data_type_to_string(cell))
+                    .unwrap_or_default();
+                if !value.is_empty() {
+                    if let Some(count) = column_non_empty_counts.get_mut(col_idx) {
+                        *count += 1;
+                    }
+                }
+                formatted_row.push(value);
+            }
+            preview_rows.push(formatted_row);
+        } else {
+            for col_idx in 0..column_count {
+                if let Some(cell) = row.get(col_idx) {
+                    if data_has_value(cell) {
+                        if let Some(count) = column_non_empty_counts.get_mut(col_idx) {
+                            *count += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    (preview_rows, total_rows, column_non_empty_counts)
+}
+
+enum IterableColumnState {
+    Empty,
+    Valid,
+    Invalid,
+}
+
+fn assess_iterable_column(
+    range: &Range<Data>,
+    header_row_index: usize,
+    column_index: usize,
+) -> IterableColumnState {
+    let mut seen_valid = false;
+    for (idx, row) in range.rows().enumerate() {
+        if idx <= header_row_index {
             continue;
         }
-        preview_rows.push(row.iter().map(data_type_to_string).collect());
+        if let Some(cell) = row.get(column_index) {
+            if !data_has_value(cell) {
+                continue;
+            }
+            let value = data_to_value(cell);
+            if iterable_value_is_valid(&value) {
+                seen_valid = true;
+                continue;
+            } else {
+                return IterableColumnState::Invalid;
+            }
+        }
     }
-    (preview_rows, total_rows)
+    if seen_valid {
+        IterableColumnState::Valid
+    } else {
+        IterableColumnState::Empty
+    }
 }
 
 fn row_is_empty(row: &[Data]) -> bool {
@@ -538,6 +1062,15 @@ fn data_type_to_string(value: &Data) -> String {
     }
 }
 
+fn data_has_value(value: &Data) -> bool {
+    match value {
+        Data::String(s) => !s.trim().is_empty(),
+        Data::Float(_) | Data::Int(_) | Data::Bool(_) => true,
+        Data::Empty | Data::Error(_) => false,
+        other => !other.to_string().trim().is_empty(),
+    }
+}
+
 fn data_to_value(value: &Data) -> Value {
     match value {
         Data::String(s) => parse_string_value(s),
@@ -548,6 +1081,14 @@ fn data_to_value(value: &Data) -> Value {
         Data::Bool(v) => Value::Bool(*v),
         Data::Empty | Data::Error(_) => Value::Null,
         other => Value::String(other.to_string()),
+    }
+}
+
+fn iterable_value_is_valid(value: &Value) -> bool {
+    match value {
+        Value::Array(items) => items.iter().all(|item| item.is_object()),
+        Value::Object(_) => true,
+        _ => false,
     }
 }
 
@@ -670,6 +1211,36 @@ fn ensure_path(target: &mut Value, path: &[PathSegment]) {
     }
 }
 
+fn ensure_iterable_columns_are_structured(
+    root: &Value,
+    parsed_columns: &[(String, Vec<PathSegment>)],
+    iterable_variables: &[String],
+) -> Result<(), String> {
+    if iterable_variables.is_empty() {
+        return Ok(());
+    }
+    let mut invalid = Vec::new();
+    for variable in iterable_variables {
+        if let Some(path) = column_segments(parsed_columns, variable) {
+            if let Some(value) = extract_value(root, path) {
+                if !iterable_value_is_valid(value) {
+                    invalid.push(variable.clone());
+                }
+            } else {
+                invalid.push(variable.clone());
+            }
+        }
+    }
+    if invalid.is_empty() {
+        Ok(())
+    } else {
+        Err(format!(
+            "以下列必须填写由 JSON 对象组成的数组（或对象本身）: {}",
+            invalid.join(", ")
+        ))
+    }
+}
+
 fn extract_value<'a>(value: &'a Value, path: &[PathSegment]) -> Option<&'a Value> {
     let mut current = value;
     for segment in path.iter() {
@@ -719,6 +1290,22 @@ fn trim_trailing_zeros(input: &str) -> Option<String> {
         }
     }
     None
+}
+
+fn format_examples(values: &[String]) -> String {
+    if values.is_empty() {
+        return String::new();
+    }
+    if values.len() == 1 {
+        return values[0].clone();
+    }
+    let parts: Vec<String> = values.iter().take(3).cloned().collect();
+    let preview = parts.join(" / ");
+    if values.len() > 3 {
+        format!("{preview} / ...")
+    } else {
+        preview
+    }
 }
 
 fn format_tera_parse_error(err: tera::Error, template: &str) -> String {

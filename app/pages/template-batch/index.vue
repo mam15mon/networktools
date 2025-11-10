@@ -48,7 +48,7 @@
 					</div>
 
 					<div v-if="templateState.analysis" class="space-y-4">
-						<div class="grid gap-4 md:grid-cols-3">
+						<div class="grid gap-4 md:grid-cols-4">
 							<div class="p-3 bg-(--ui-bg-muted) rounded-lg">
 								<div class="flex items-center gap-2 mb-1">
 									<Icon name="i-lucide-variable" class="size-4 text-(--ui-text-muted)" />
@@ -61,14 +61,24 @@
 									<Icon name="i-lucide-git-branch" class="size-4 text-(--ui-text-muted)" />
 									<span class="text-xs font-medium text-(--ui-text-muted)">循环控制</span>
 								</div>
-								<p class="text-lg font-semibold">{{ templateState.analysis.hasLoops ? '支持' : '不支持' }}</p>
+								<p class="text-lg font-semibold">{{ getLoopCountText() }}</p>
 							</div>
 							<div class="p-3 bg-(--ui-bg-muted) rounded-lg">
 								<div class="flex items-center gap-2 mb-1">
 									<Icon name="i-lucide-git-merge" class="size-4 text-(--ui-text-muted)" />
 									<span class="text-xs font-medium text-(--ui-text-muted)">条件渲染</span>
 								</div>
-								<p class="text-lg font-semibold">{{ templateState.analysis.hasConditionals ? '支持' : '不支持' }}</p>
+								<p class="text-lg font-semibold">{{ getConditionalCountText() }}</p>
+							</div>
+							<div class="p-3 bg-(--ui-bg-muted) rounded-lg">
+								<div class="flex items-center gap-2 mb-1">
+									<Icon name="i-lucide-rotate-ccw" class="size-4 text-(--ui-text-muted)" />
+									<span class="text-xs font-medium text-(--ui-text-muted)">默认回退</span>
+								</div>
+								<p class="text-lg font-semibold">{{ getDefaultFallbackText() }}</p>
+								<p class="text-xs text-(--ui-text-muted) mt-1">
+									使用 default 过滤器，可留空
+								</p>
 							</div>
 													</div>
 
@@ -93,6 +103,36 @@
 								>
 									<div class="flex items-center gap-1">
 										{{ variable }}
+										<UTooltip
+											v-if="hasLoopUsage(variable)"
+											text="在 {% for %} 中使用，Excel 中需填 JSON 数组/对象"
+											:popper="{ arrow: true }"
+										>
+											<Icon
+												name="i-lucide-repeat-2"
+												class="size-3 text-blue-500"
+											/>
+										</UTooltip>
+										<UTooltip
+											v-if="hasConditionalUsage(variable)"
+											text="参与条件渲染，请按模板示例填写"
+											:popper="{ arrow: true }"
+										>
+											<Icon
+												name="i-lucide-git-branch"
+												class="size-3 text-emerald-500"
+											/>
+										</UTooltip>
+										<UTooltip
+											v-if="getDefaultFallback(variable)"
+											text="支持 default 过滤器，可留空"
+											:popper="{ arrow: true }"
+										>
+											<Icon
+												name="i-lucide-circle-dot"
+												class="size-3 text-amber-500"
+											/>
+										</UTooltip>
 										<Icon
 											v-if="labelField === variable"
 											name="i-lucide-check"
@@ -100,6 +140,63 @@
 										/>
 									</div>
 								</UBadge>
+							</div>
+						</div>
+
+						<div v-if="defaultFallbackEntries.length" class="space-y-2">
+							<h4 class="text-base font-semibold">
+								支持 default 回退的变量
+							</h4>
+							<p class="text-xs text-(--ui-text-muted)">
+								这些列留空时会自动使用默认值，请确保 Excel 中的默认来源列存在。
+							</p>
+							<div class="flex flex-wrap gap-2">
+								<UBadge
+									v-for="([variable, fallback], index) in defaultFallbackEntries"
+									:key="`default-${variable}-${index}`"
+									variant="outline"
+									size="sm"
+								>
+									{{ variable }} ← {{ fallback }}
+								</UBadge>
+							</div>
+						</div>
+
+						<div v-if="loopVariables.length" class="space-y-2">
+							<h4 class="text-base font-semibold">
+								循环使用的变量
+							</h4>
+							<p class="text-xs text-(--ui-text-muted)">
+								这些变量会在 {% for %} 中迭代，Excel 中需填写 JSON 数组或对象结构。
+							</p>
+							<div class="flex flex-wrap gap-2">
+								<UBadge
+									v-for="variable in loopVariables"
+									:key="`loop-${variable}`"
+									variant="outline"
+									size="sm"
+								>
+									{{ variable }}
+								</UBadge>
+							</div>
+						</div>
+
+						<div v-if="conditionalEntries.length" class="space-y-2">
+							<h4 class="text-base font-semibold">
+								参与条件渲染的变量
+							</h4>
+							<p class="text-xs text-(--ui-text-muted)">
+								根据模板中的 if/elif 比较，这些变量通常取以下值，请按需填写。
+							</p>
+							<div class="flex flex-col gap-1">
+								<div
+									v-for="([variable, values], index) in conditionalEntries"
+									:key="`conditional-${variable}-${index}`"
+									class="text-sm text-(--ui-text)"
+								>
+									<span class="font-medium">{{ variable }}</span>
+									<span class="text-(--ui-text-muted)"> → {{ formatExampleList(values) }}</span>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -164,37 +261,86 @@
 						</div>
 
 						<div v-if="excelState.preview.columns.length" class="space-y-3">
-							<div class="flex items-center justify-between">
-								<h4 class="text-base font-semibold">
-									列映射验证
-								</h4>
-								<div class="flex items-center gap-2">
-									<div v-if="columnValidationStatus.isValid" class="flex items-center gap-1 text-xs text-green-600">
-										<Icon name="i-lucide-check-circle" class="size-3" />
-										<span>验证通过</span>
-									</div>
-									<div v-else class="flex items-center gap-1 text-xs text-red-600">
-										<Icon name="i-lucide-alert-circle" class="size-3" />
-										<span>缺少必需列</span>
+								<div class="flex items-center justify-between">
+									<h4 class="text-base font-semibold">
+										列映射验证
+									</h4>
+									<div class="flex items-center gap-2">
+										<div v-if="columnValidationStatus.isValid" class="flex items-center gap-1 text-xs text-green-600">
+											<Icon name="i-lucide-check-circle" class="size-3" />
+											<span>验证通过</span>
+										</div>
+										<div v-else class="flex items-center gap-1 text-xs text-red-600">
+											<Icon name="i-lucide-alert-circle" class="size-3" />
+											<span>
+												<template v-if="columnValidationStatus.missingVariables.length">
+													缺少必需列
+												</template>
+												<template v-else>
+													必需列缺少有效数据
+												</template>
+											</span>
+										</div>
 									</div>
 								</div>
-							</div>
 
-							<div v-if="columnValidationStatus.missingVariables.length" class="space-y-2">
-								<p class="text-sm text-red-600">
-									缺少以下变量对应的列：
-								</p>
-								<div class="flex flex-wrap gap-2">
-									<UBadge
-										v-for="variable in columnValidationStatus.missingVariables"
-										:key="variable"
-										variant="error"
-										size="sm"
-									>
-										{{ variable }}
-									</UBadge>
+								<div v-if="columnValidationStatus.missingVariables.length" class="space-y-2">
+									<p class="text-sm text-red-600">
+										缺少以下变量对应的列：
+									</p>
+									<div class="flex flex-wrap gap-2">
+										<UBadge
+											v-for="variable in columnValidationStatus.missingVariables"
+											:key="variable"
+											variant="error"
+											size="sm"
+										>
+											{{ variable }}
+										</UBadge>
+									</div>
 								</div>
-							</div>
+
+								<div v-if="columnValidationStatus.emptyVariables.length" class="space-y-2">
+									<p class="text-sm text-amber-600">
+										以下列存在但没有可用数据，无法生成配置：
+									</p>
+									<div class="flex flex-wrap gap-2">
+										<UBadge
+											v-for="variable in columnValidationStatus.emptyVariables"
+											:key="`empty-${variable}`"
+											variant="outline"
+											size="sm"
+										>
+											{{ variable }}
+										</UBadge>
+									</div>
+									<p class="text-xs text-(--ui-text-muted)">
+										请在 Excel 中至少为这些列提供一条非空数据后重新解析。
+									</p>
+								</div>
+
+								<div v-if="columnValidationStatus.invalidIterableVariables.length" class="space-y-2">
+									<p class="text-sm text-amber-600">
+										以下列必须填写“由 JSON 对象组成的数组”或“单个 JSON 对象”（示例：
+										<code class="px-1 py-0.5 rounded bg-(--ui-bg-muted)">
+											[{"id":1,"name":"Core","ip":"10.0.0.1","mask":"255.255.255.0"}]
+										</code>
+										），且数组元素不得再是数组，请检查填充内容：
+									</p>
+									<div class="flex flex-wrap gap-2">
+										<UBadge
+											v-for="variable in columnValidationStatus.invalidIterableVariables"
+											:key="`invalid-${variable}`"
+											variant="outline"
+											size="sm"
+										>
+											{{ variable }}
+										</UBadge>
+									</div>
+									<p class="text-xs text-(--ui-text-muted)">
+										模板中通过 <code>{% for %}</code> 使用这些变量时，Excel 列必须提供合法 JSON 结构，否则无法生成配置。
+									</p>
+								</div>
 
 							<div class="space-y-2">
 								<div class="flex items-center justify-between">
@@ -405,19 +551,60 @@ watch(
 
 	const columnValidationStatus = computed(() => {
 		if (!templateState.analysis || !excelState.preview) {
-			return { isValid: false, missingVariables: [] };
+			return { isValid: false, missingVariables: [], emptyVariables: [], invalidIterableVariables: [] };
 		}
 
 		const requiredVariables = templateState.analysis.variables;
 		const availableColumns = excelState.preview.columns;
+		const columnsWithData = excelState.preview.columnsWithData || [];
+		const invalidIterableColumns = excelState.preview.invalidIterableColumns || [];
+
 		const missingVariables = requiredVariables.filter(
 			variable => !availableColumns.includes(variable)
 		);
+		const emptyVariables = requiredVariables
+			.filter(variable => availableColumns.includes(variable))
+			.filter(variable => !columnsWithData.includes(variable));
+		const invalidIterableVariables = templateState.analysis.iterableVariables
+			.filter(variable => availableColumns.includes(variable))
+			.filter(variable => invalidIterableColumns.includes(variable));
 
 		return {
-			isValid: missingVariables.length === 0,
-			missingVariables
+			isValid:
+				missingVariables.length === 0 &&
+				emptyVariables.length === 0 &&
+				invalidIterableVariables.length === 0,
+			missingVariables,
+			emptyVariables,
+			invalidIterableVariables
 		};
+	});
+
+	const defaultFallbackEntries = computed(() => {
+		const map = templateState.analysis?.defaultFallbacks;
+		if (!map) return [];
+		return Object.entries(map);
+	});
+
+	const iterableVariableSet = computed(() => {
+		return new Set(templateState.analysis?.iterableVariables ?? []);
+	});
+
+	const conditionalVariableSet = computed(() => {
+		const map = templateState.analysis?.sampleValues;
+		if (!map) return new Set<string>();
+		const entries = Object.entries(map).filter(([, values]) => values && values.length > 0);
+		return new Set(entries.map(([key]) => key));
+	});
+
+	const loopVariables = computed(() => {
+		return Array.from(iterableVariableSet.value);
+	});
+
+	const conditionalEntries = computed(() => {
+		const map = templateState.analysis?.sampleValues;
+		if (!map) return [];
+		return Object.entries(map).filter(([, values]) => values && values.length > 0);
 	});
 
 	
@@ -446,6 +633,45 @@ watch(
 			const sheetToUse = excelState.selectedSheet || undefined;
 			previewExcel(sheetToUse);
 		}
+	}
+
+	function getLoopCountText(): string {
+		if (!templateState.analysis) return "未使用";
+		if (templateState.analysis.hasLoops) {
+			return `${templateState.analysis.loopCount} 个`;
+		}
+		return "未使用";
+	}
+
+	function getConditionalCountText(): string {
+		if (!templateState.analysis) return "未使用";
+		if (templateState.analysis.hasConditionals) {
+			return `${templateState.analysis.conditionalCount} 个`;
+		}
+		return "未使用";
+	}
+
+	function getDefaultFallbackText(): string {
+		const fallbackCount = defaultFallbackEntries.value.length;
+		return fallbackCount > 0 ? `${fallbackCount} 列` : "未使用";
+	}
+
+	function getDefaultFallback(variable: string): string | undefined {
+		return templateState.analysis?.defaultFallbacks?.[variable];
+	}
+
+	function hasLoopUsage(variable: string): boolean {
+		return iterableVariableSet.value.has(variable);
+	}
+
+	function hasConditionalUsage(variable: string): boolean {
+		return conditionalVariableSet.value.has(variable);
+	}
+
+	function formatExampleList(values: string[]): string {
+		if (!values || !values.length) return "示例缺失";
+		const preview = values.slice(0, 3).join(" / ");
+		return values.length > 3 ? `${preview} / ...` : preview;
 	}
 
 	function setLabelField(variable: string) {
@@ -523,18 +749,22 @@ watch(
 			});
 			if (!path) return;
 
-			await useTauriCoreInvoke("export_tera_variable_template", {
-				request: {
-					path,
-					variables: templateState.analysis.variables
-				}
-			});
+				await useTauriCoreInvoke("export_tera_variable_template", {
+					request: {
+						path,
+						variables: templateState.analysis.variables,
+						iterableVariables: templateState.analysis.iterableVariables,
+						sampleValues: templateState.analysis.sampleValues || {},
+						defaultFallbacks: templateState.analysis.defaultFallbacks || {},
+						filterUsage: templateState.analysis.filterUsage || {}
+					}
+				});
 
-			toast.add({
-				title: "变量模板导出成功",
-				description: `模板已保存到 ${path}`,
-				color: "success"
-			});
+				toast.add({
+					title: "变量模板导出成功",
+					description: `模板已保存到 ${path}（首行为变量名，第二行为示例，可按需修改）`,
+					color: "success"
+				});
 		} catch (error) {
 			toast.add({
 				title: "导出失败",
@@ -577,7 +807,8 @@ watch(
 				request: {
 					filePath: excelState.filePath,
 					sheetName: sheetName || excelState.selectedSheet || undefined,
-					expectedVariables: templateState.analysis.variables
+					expectedVariables: templateState.analysis.variables,
+					iterableVariables: templateState.analysis.iterableVariables
 				}
 			});
 
@@ -628,15 +859,16 @@ watch(
 		generationErrors.value = [];
 
 		try {
-			const configs = await useTauriCoreInvoke<GenericGeneratedConfig[]>("generate_template_configs", {
-				request: {
-					templatePath: templateState.filePath,
-					excelPath: excelState.filePath,
-					sheetName: excelState.selectedSheet || undefined,
-					expectedVariables: templateState.analysis.variables,
-					labelField: labelField.value || undefined
-				}
-			});
+				const configs = await useTauriCoreInvoke<GenericGeneratedConfig[]>("generate_template_configs", {
+					request: {
+						templatePath: templateState.filePath,
+						excelPath: excelState.filePath,
+						sheetName: excelState.selectedSheet || undefined,
+						expectedVariables: templateState.analysis.variables,
+						labelField: labelField.value || undefined,
+						iterableVariables: templateState.analysis.iterableVariables
+					}
+				});
 
 			generatedConfigs.value = configs;
 			expandedConfigs.value = {};

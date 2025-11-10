@@ -366,10 +366,17 @@ pub fn get_all_elastic_mappings() -> Result<Vec<ElasticMappingEntry>, String> {
     Ok(entries)
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoveElasticIpRequest {
+    #[serde(alias = "internal_ip")]
+    internal_ip: String,
+}
+
 #[tauri::command]
-pub fn remove_elastic_ip_mapping(internal_ip: String) -> Result<(), String> {
+pub fn remove_elastic_ip_mapping(request: RemoveElasticIpRequest) -> Result<(), String> {
     let (mut mapping, _) = build_elastic_entry_map()?;
-    let normalized = parse_ipv4(&internal_ip)?.to_string();
+    let normalized = parse_ipv4(&request.internal_ip)?.to_string();
     mapping.remove(&normalized);
     save_elastic_ip_mapping_internal(&mapping)
 }

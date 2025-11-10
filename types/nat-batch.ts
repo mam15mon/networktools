@@ -27,6 +27,16 @@ export interface ConvertResponse {
 
 export type DeviceType = "huawei" | "h3c";
 
+export type IspSource = "local" | "online"
+
+export interface GenerateNatCommandsRequest {
+	entries: NatEntry[]
+	useElasticIp: boolean
+	deviceType: DeviceType
+	vrrpId?: number | null
+	ispSource?: IspSource
+}
+
 export interface GenerateNatCommandsResponse {
 	commands: string[]
 	missingElasticIps: string[]

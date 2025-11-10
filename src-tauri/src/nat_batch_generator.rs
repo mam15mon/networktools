@@ -1,3 +1,4 @@
+use crate::ip_location::lookup_ip_location;
 use crate::isp_manager::{
     find_isp_for_ip, load_elastic_ip_mapping_internal, load_isp_data_internal,
 };
@@ -683,7 +684,7 @@ pub fn convert_excel_to_entries(request: ConvertInputRequest) -> Result<ConvertR
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceType {
     Huawei,
@@ -696,7 +697,20 @@ impl Default for DeviceType {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum IspSource {
+    Local,
+    Online,
+}
+
+impl Default for IspSource {
+    fn default() -> Self {
+        IspSource::Local
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerateNatCommandsRequest {
     pub entries: Vec<NatEntry>,
@@ -705,6 +719,8 @@ pub struct GenerateNatCommandsRequest {
     #[serde(default)]
     pub device_type: DeviceType,
     pub vrrp_id: Option<u16>,
+    #[serde(default)]
+    pub isp_source: IspSource,
 }
 
 #[derive(Serialize)]
@@ -712,6 +728,39 @@ pub struct GenerateNatCommandsRequest {
 pub struct GenerateNatCommandsResponse {
     pub commands: Vec<String>,
     pub missing_elastic_ips: Vec<String>,
+}
+
+fn prefix_from_code(code: &str) -> String {
+    if code.is_empty() {
+        String::new()
+    } else {
+        format!("{}_", code)
+    }
+}
+
+fn prefix_from_label(label: &str) -> String {
+    let normalized = label.trim().to_lowercase();
+    if normalized.is_empty() {
+        return String::new();
+    }
+
+    let code = if normalized.contains("电信")
+        || normalized.contains("telecom")
+        || normalized.contains("chinanet")
+    {
+        "DX"
+    } else if normalized.contains("联通") || normalized.contains("unicom") {
+        "LT"
+    } else if normalized.contains("移动")
+        || normalized.contains("cmcc")
+        || normalized.contains("mobile")
+    {
+        "YD"
+    } else {
+        "OTHER"
+    };
+
+    prefix_from_code(code)
 }
 
 fn build_huawei_command(
@@ -833,19 +882,29 @@ fn build_h3c_command(
 }
 
 #[tauri::command]
-pub fn generate_nat_commands(
+pub async fn generate_nat_commands(
     request: GenerateNatCommandsRequest,
 ) -> Result<GenerateNatCommandsResponse, String> {
+    let GenerateNatCommandsRequest {
+        entries,
+        use_elastic_ip,
+        device_type,
+        vrrp_id,
+        isp_source,
+    } = request;
+
     let elastic_mapping = load_elastic_ip_mapping_internal()?;
-    let isp_data = load_isp_data_internal()?;
+    let isp_data = if matches!(isp_source, IspSource::Local) {
+        Some(load_isp_data_internal()?)
+    } else {
+        None
+    };
 
     let mut commands = Vec::new();
     let mut missing_elastic = HashSet::new();
 
-    let vrrp_id = request.vrrp_id;
-
-    for entry in request.entries {
-        let elastic_ip = if request.use_elastic_ip {
+    for entry in entries {
+        let elastic_ip = if use_elastic_ip {
             match elastic_mapping.get(&entry.internal_ip) {
                 Some(value) => Some(value.as_str()),
                 None => {
@@ -858,14 +917,26 @@ pub fn generate_nat_commands(
         };
 
         for public_ip in &entry.public_ips {
-            let isp_prefix = match parse_ipv4(public_ip) {
-                Ok(ip) => find_isp_for_ip(&ip, &isp_data)
-                    .map(|(isp, _)| format!("{}_", isp))
-                    .unwrap_or_default(),
-                Err(_) => String::new(),
+            let isp_prefix = match isp_source {
+                IspSource::Local => match parse_ipv4(public_ip) {
+                    Ok(ip) => isp_data
+                        .as_ref()
+                        .and_then(|data| {
+                            find_isp_for_ip(&ip, data).map(|(isp, _)| prefix_from_code(&isp))
+                        })
+                        .unwrap_or_default(),
+                    Err(_) => String::new(),
+                },
+                IspSource::Online => match lookup_ip_location(public_ip.to_string()).await {
+                    Ok(info) => prefix_from_label(&info.location.isp),
+                    Err(err) => {
+                        eprintln!("在线 ISP 查询失败: {}", err);
+                        String::new()
+                    }
+                },
             };
 
-            let command = match request.device_type {
+            let command = match device_type {
                 DeviceType::Huawei => {
                     build_huawei_command(&entry, public_ip, &isp_prefix, elastic_ip)
                 }

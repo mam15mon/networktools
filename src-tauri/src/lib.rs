@@ -11,6 +11,7 @@ mod ipv6_subnet;
 mod isp_manager;
 mod nat_batch_generator;
 mod nat_parser;
+mod template_batch;
 mod vsr_batch;
 
 pub fn run() {
@@ -73,7 +74,12 @@ pub fn run() {
             vsr_batch::process_vsr_excel,
             vsr_batch::convert_vsr_entries,
             vsr_batch::generate_vsr_configs,
-            vsr_batch::export_vsr_configs
+            vsr_batch::export_vsr_configs,
+            template_batch::analyze_tera_template,
+            template_batch::export_tera_variable_template,
+            template_batch::preview_template_excel,
+            template_batch::generate_template_configs,
+            template_batch::export_template_configs
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
