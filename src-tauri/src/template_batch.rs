@@ -193,7 +193,7 @@ pub fn export_tera_variable_template(request: ExportTeraTemplateRequest) -> Resu
             .map_err(|err| err.to_string())?;
     }
 
-    write_color_legend(&mut workbook, &request)
+    write_color_legend(&mut workbook)
         .map_err(|err| err.to_string())?;
 
     workbook
@@ -913,10 +913,7 @@ fn compose_sample_value(
     format!("{} 示例值", name)
 }
 
-fn write_color_legend(
-    workbook: &mut Workbook,
-    _request: &ExportTeraTemplateRequest,
-) -> Result<(), rust_xlsxwriter::XlsxError> {
+fn write_color_legend(workbook: &mut Workbook) -> Result<(), rust_xlsxwriter::XlsxError> {
     let legend_sheet = workbook.add_worksheet();
     legend_sheet.set_name("颜色说明")?;
 

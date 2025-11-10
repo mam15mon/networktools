@@ -39,6 +39,7 @@
 						>
 							导出变量模板
 						</UButton>
+						<TemplateBatchTeraTutorialDrawer />
 					</div>
 
 					<div v-if="templateState.filePath" class="p-3 bg-(--ui-bg-muted) rounded-md">
@@ -76,9 +77,6 @@
 									<span class="text-xs font-medium text-(--ui-text-muted)">默认回退</span>
 								</div>
 								<p class="text-lg font-semibold">{{ getDefaultFallbackText() }}</p>
-								<p class="text-xs text-(--ui-text-muted) mt-1">
-									使用 default 过滤器，可留空
-								</p>
 							</div>
 													</div>
 
@@ -103,36 +101,6 @@
 								>
 									<div class="flex items-center gap-1">
 										{{ variable }}
-										<UTooltip
-											v-if="hasLoopUsage(variable)"
-											text="在 {% for %} 中使用，Excel 中需填 JSON 数组/对象"
-											:popper="{ arrow: true }"
-										>
-											<Icon
-												name="i-lucide-repeat-2"
-												class="size-3 text-blue-500"
-											/>
-										</UTooltip>
-										<UTooltip
-											v-if="hasConditionalUsage(variable)"
-											text="参与条件渲染，请按模板示例填写"
-											:popper="{ arrow: true }"
-										>
-											<Icon
-												name="i-lucide-git-branch"
-												class="size-3 text-emerald-500"
-											/>
-										</UTooltip>
-										<UTooltip
-											v-if="getDefaultFallback(variable)"
-											text="支持 default 过滤器，可留空"
-											:popper="{ arrow: true }"
-										>
-											<Icon
-												name="i-lucide-circle-dot"
-												class="size-3 text-amber-500"
-											/>
-										</UTooltip>
 										<Icon
 											v-if="labelField === variable"
 											name="i-lucide-check"
@@ -143,60 +111,32 @@
 							</div>
 						</div>
 
-						<div v-if="defaultFallbackEntries.length" class="space-y-2">
+						<div v-if="variableInsights.length" class="space-y-2">
 							<h4 class="text-base font-semibold">
-								支持 default 回退的变量
+								变量示例预览
 							</h4>
-							<p class="text-xs text-(--ui-text-muted)">
-								这些列留空时会自动使用默认值，请确保 Excel 中的默认来源列存在。
-							</p>
-							<div class="flex flex-wrap gap-2">
-								<UBadge
-									v-for="([variable, fallback], index) in defaultFallbackEntries"
-									:key="`default-${variable}-${index}`"
-									variant="outline"
-									size="sm"
-								>
-									{{ variable }} ← {{ fallback }}
-								</UBadge>
-							</div>
-						</div>
-
-						<div v-if="loopVariables.length" class="space-y-2">
-							<h4 class="text-base font-semibold">
-								循环使用的变量
-							</h4>
-							<p class="text-xs text-(--ui-text-muted)">
-								这些变量会在 {% for %} 中迭代，Excel 中需填写 JSON 数组或对象结构。
-							</p>
-							<div class="flex flex-wrap gap-2">
-								<UBadge
-									v-for="variable in loopVariables"
-									:key="`loop-${variable}`"
-									variant="outline"
-									size="sm"
-								>
-									{{ variable }}
-								</UBadge>
-							</div>
-						</div>
-
-						<div v-if="conditionalEntries.length" class="space-y-2">
-							<h4 class="text-base font-semibold">
-								参与条件渲染的变量
-							</h4>
-							<p class="text-xs text-(--ui-text-muted)">
-								根据模板中的 if/elif 比较，这些变量通常取以下值，请按需填写。
-							</p>
-							<div class="flex flex-col gap-1">
-								<div
-									v-for="([variable, values], index) in conditionalEntries"
-									:key="`conditional-${variable}-${index}`"
-									class="text-sm text-(--ui-text)"
-								>
-									<span class="font-medium">{{ variable }}</span>
-									<span class="text-(--ui-text-muted)"> → {{ formatExampleList(values) }}</span>
-								</div>
+							<div class="overflow-x-auto border border-(--ui-border) rounded-lg">
+								<table class="min-w-full text-sm">
+									<thead class="bg-(--ui-bg-muted)">
+										<tr>
+											<th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">变量</th>
+											<th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">示例值</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr
+											v-for="insight in variableInsights"
+											:key="`preview-${insight.name}`"
+											class="border-t border-(--ui-border) cursor-pointer hover:bg-(--ui-bg-muted)"
+											@click="openVariableDrawer(insight.name)"
+										>
+											<td class="px-3 py-2 font-medium text-(--ui-text)">{{ insight.name }}</td>
+											<td class="px-3 py-2 font-mono text-xs text-(--ui-text-muted)">
+												{{ insight.sample }}
+											</td>
+										</tr>
+									</tbody>
+								</table>
 							</div>
 						</div>
 					</div>
@@ -471,9 +411,97 @@
 				</div>
 			</UCard>
 
+						</div>
+		<UDrawer
+			v-model:open="variableDrawer.open"
+			direction="right"
+			title="变量详情"
+			:description="variableDrawerDescription"
+		>
+			<template #body>
+				<div v-if="activeVariableInsight" class="space-y-4 p-4">
+					<div>
+						<h3 class="text-lg font-semibold">{{ activeVariableInsight.name }}</h3>
+						<p class="text-xs text-(--ui-text-muted)">
+							变量详情
+						</p>
 					</div>
-	</LayoutTile>
-</template>
+					<div v-if="shouldShowSample(activeVariableInsight)">
+						<p class="text-sm text-(--ui-text-muted)">模板示例值：</p>
+						<p class="font-mono text-xs bg-(--ui-bg-muted) p-2 rounded border border-(--ui-border)">
+							{{ activeVariableInsight.sample }}
+						</p>
+					</div>
+
+					<div>
+						<h4 class="text-sm font-semibold">字段特性</h4>
+						<div class="flex flex-wrap gap-2 mt-2">
+							<UBadge v-if="activeVariableInsight.tags.loop" variant="subtle" color="blue">
+								循环
+							</UBadge>
+							<UBadge v-if="activeVariableInsight.tags.conditional" variant="subtle" color="green">
+								条件
+							</UBadge>
+							<UBadge v-if="activeVariableInsight.tags.defaultable" variant="subtle" color="amber">
+								Default
+							</UBadge>
+							<UBadge v-if="activeVariableInsight.tags.formatting" variant="subtle" color="purple">
+								格式化
+							</UBadge>
+						</div>
+						<ul class="mt-3 space-y-1 text-xs text-(--ui-text-muted)">
+							<li v-if="activeVariableInsight.tags.loop">
+								循环变量：Excel 中必须填写 JSON 数组或对象结构，否则无法渲染 {% for %}。
+							</li>
+							<li v-if="activeVariableInsight.tags.conditional && activeVariableInsight.conditionalValues.length">
+								条件变量：模板检测到可选值 {{ formatExampleList(activeVariableInsight.conditionalValues) }}。
+							</li>
+							<li v-if="activeVariableInsight.tags.defaultable && activeVariableInsight.defaultFallback">
+								Default 回退：留空时将使用 {{ activeVariableInsight.defaultFallback }}。
+							</li>
+							<li v-if="activeVariableInsight.tags.formatting && activeVariableInsight.formattingDescriptions.length">
+								格式化提示：{{ activeVariableInsight.formattingDescriptions.join(" / ") }}。
+							</li>
+							<li v-else-if="activeVariableInsight.tags.formatting">
+								格式化变量：渲染时会自动应用过滤器，Excel 直接填写原值即可。
+							</li>
+							<li v-if="!activeVariableInsight.tags.loop && !activeVariableInsight.tags.conditional && !activeVariableInsight.tags.defaultable && !activeVariableInsight.tags.formatting">
+								常规变量：直接在 Excel 中填写对应值。
+							</li>
+						</ul>
+					</div>
+
+					<div v-if="activeVariableInsight.defaultFallback">
+						<h4 class="text-sm font-semibold">默认回退</h4>
+						<p class="text-sm text-(--ui-text-muted)">
+							留空时默认使用 <span class="font-mono">{{ activeVariableInsight.defaultFallback }}</span>
+						</p>
+					</div>
+
+					<div v-if="activeVariableInsight.conditionalValues.length">
+						<h4 class="text-sm font-semibold">条件示例</h4>
+						<p class="text-xs text-(--ui-text-muted)">模板检测到以下典型取值：</p>
+						<div class="flex flex-wrap gap-1 mt-1">
+							<UBadge
+								v-for="(value, index) in activeVariableInsight.conditionalValues"
+								:key="`drawer-cond-${index}`"
+								size="sm"
+								variant="outline"
+							>
+								{{ value }}
+							</UBadge>
+						</div>
+					</div>
+
+					<div class="flex justify-end">
+						<UButton variant="outline" @click="closeVariableDrawer">关闭</UButton>
+					</div>
+				</div>
+				<div v-else class="text-sm text-(--ui-text-muted) p-4">未找到变量信息。</div>
+			</template>
+		</UDrawer>
+		</LayoutTile>
+	</template>
 
 <script lang="ts" setup>
 	import type {
@@ -481,7 +509,33 @@
 		TemplateExcelPreview,
 		GenericGeneratedConfig
 	} from "~/types/template-batch";
-	import { computed, reactive, ref } from "vue";
+	import { computed, reactive, ref, watch } from "vue";
+
+	const FORMATTING_FILTERS = [
+		"upper",
+		"lower",
+		"capitalize",
+		"title",
+		"trim",
+		"trim_end",
+		"trim_start",
+		"slice",
+		"replace",
+		"escape"
+	] as const;
+
+	const FORMATTING_DESCRIPTIONS: Record<string, string> = {
+		upper: "自动转为大写",
+		lower: "自动转为小写",
+		capitalize: "首字母大写",
+		title: "每个单词首字母大写",
+		trim: "移除首尾空格",
+		trim_end: "移除结尾空格",
+		trim_start: "移除开头空格",
+		slice: "截取字符串片段",
+		replace: "替换字符",
+		escape: "自动转义特殊字符"
+	};
 	import { extractErrorMessage } from "~/utils/error";
 
 	definePageMeta({
@@ -515,7 +569,7 @@
 watch(
 	() => templateState.analysis?.variables,
 	(variables) => {
-		if (variables && variables.length > 0 && !labelField.value) {
+		if (variables && variables.length > 0) {
 			labelField.value = variables[0];
 		}
 	},
@@ -523,9 +577,14 @@ watch(
 );
 	const generationLoading = ref(false);
 	const generationErrors = ref<string[]>([]);
-	const generatedConfigs = ref<GenericGeneratedConfig[]>([]);
-	const expandedConfigs = ref<Record<number, boolean>>({});
+		const generatedConfigs = ref<GenericGeneratedConfig[]>([]);
+		const expandedConfigs = ref<Record<number, boolean>>({});
 	const showAllConfigs = ref(false);
+		const variableDrawerDescription = "查看变量的示例值与校验提示";
+		const variableDrawer = reactive({
+			open: false,
+			variable: ""
+		});
 
 	// 计算属性
 	const excelPreviewColumns = computed(() => {
@@ -597,14 +656,34 @@ watch(
 		return new Set(entries.map(([key]) => key));
 	});
 
-	const loopVariables = computed(() => {
-		return Array.from(iterableVariableSet.value);
+	const variableInsights = computed(() => {
+		if (!templateState.analysis) return [];
+		return templateState.analysis.variables.map((variable) => {
+			const tags = {
+				loop: iterableVariableSet.value.has(variable),
+				conditional: conditionalVariableSet.value.has(variable),
+				defaultable: Boolean(getDefaultFallback(variable)),
+				formatting: isFormattingOnly(variable)
+			};
+			const formattingDescriptions = getFormattingDescriptions(variable);
+			return {
+				name: variable,
+				sample: buildSampleValue(variable, tags),
+				tags,
+				formattingDescriptions,
+				defaultFallback: getDefaultFallback(variable),
+				conditionalValues: templateState.analysis?.sampleValues?.[variable] ?? []
+			};
+		});
 	});
 
-	const conditionalEntries = computed(() => {
-		const map = templateState.analysis?.sampleValues;
-		if (!map) return [];
-		return Object.entries(map).filter(([, values]) => values && values.length > 0);
+	const variableInsightsMap = computed(() => {
+		return new Map(variableInsights.value.map((insight) => [insight.name, insight]));
+	});
+
+	const activeVariableInsight = computed(() => {
+		if (!variableDrawer.variable) return null;
+		return variableInsightsMap.value.get(variableDrawer.variable) ?? null;
 	});
 
 	
@@ -672,6 +751,64 @@ watch(
 		if (!values || !values.length) return "示例缺失";
 		const preview = values.slice(0, 3).join(" / ");
 		return values.length > 3 ? `${preview} / ...` : preview;
+	}
+
+	function isFormattingOnly(variable: string): boolean {
+		const filters = templateState.analysis?.filterUsage?.[variable];
+		if (!filters || !filters.length) return false;
+		return filters.every((filter) => FORMATTING_FILTERS.includes(filter));
+	}
+
+	function getFormattingDescriptions(variable: string): string[] {
+		const filters = templateState.analysis?.filterUsage?.[variable];
+		if (!filters || !filters.length) return [];
+		const unique = Array.from(new Set(filters));
+		return unique
+			.map((filter) => FORMATTING_DESCRIPTIONS[filter] || `自动应用 ${filter} 过滤器`)
+			.filter(Boolean);
+	}
+
+	function buildSampleValue(
+		variable: string,
+		tags: { loop: boolean; conditional: boolean; defaultable: boolean; formatting: boolean }
+	): string {
+		if (tags.loop) {
+			return `[{"id":1,"name":"${variable}示例","ip":"10.0.0.1","mask":"255.255.255.0"}]`;
+		}
+		const values = templateState.analysis?.sampleValues?.[variable] ?? [];
+		const defaultHint = getDefaultFallback(variable);
+		if (defaultHint) {
+			if (values.length) {
+				return `可选：${formatExampleList(values)}；默认 ${defaultHint}`;
+			}
+			return `默认 ${defaultHint}，可留空`;
+		}
+		if (values.length) {
+			return formatExampleList(values);
+		}
+		if (tags.formatting) {
+			return `${variable} 示例值（自动格式化）`;
+		}
+		return `${variable} 示例值`;
+	}
+
+	function shouldShowSample(insight: {
+		name: string
+		sample: string
+	}): boolean {
+		if (!insight.sample) return false;
+		const generic = `${insight.name} 示例值`;
+		const formatting = `${insight.name} 示例值（自动格式化）`;
+		return insight.sample !== generic && insight.sample !== formatting;
+	}
+
+	function openVariableDrawer(variable: string) {
+		variableDrawer.variable = variable;
+		variableDrawer.open = true;
+	}
+
+	function closeVariableDrawer() {
+		variableDrawer.open = false;
 	}
 
 	function setLabelField(variable: string) {
