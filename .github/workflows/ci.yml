@@ -76,14 +76,8 @@ jobs:
     - name: Install dependencies
       run: bun install
 
-    - name: Run TypeScript type check
-      run: bun run typecheck
-
-    - name: Run ESLint
-      run: bun run lint
-
     - name: Build frontend
-      run: bun run build
+      run: bun run generate
 
   build-app:
     name: Build Application

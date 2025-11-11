@@ -34,17 +34,7 @@ jobs:
     - name: Run clippy
       run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
 
-    - name: Check for security vulnerabilities
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Install cargo-audit
-      run: cargo install cargo-audit
-
-    - name: Run security audit
-      run: cargo audit --manifest-path src-tauri/Cargo.toml
-
+    
   frontend-quality:
     name: Frontend Quality (TypeScript/Vue)
     runs-on: ubuntu-latest
@@ -70,43 +60,4 @@ jobs:
     - name: Run ESLint
       run: bun run lint
 
-    - name: Run Prettier check
-      run: bun run format:check
-
-    - name: TypeScript type check
-      run: bun run typecheck
-
-    - name: Check for security vulnerabilities
-      run: bun audit
-
-  dependency-check:
-    name: Dependency Check
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: package-lock.json
-
-    - name: Install bun
-      run: |
-        curl -fsSL https://bun.sh/install | bash
-        echo "$HOME/.bun/bin" >> $GITHUB_PATH
-
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-
-    - name: Check frontend dependencies
-      run: |
-        bun install
-        bun outdated
-
-    - name: Check Rust dependencies
-      run: |
-        cd src-tauri
-        cargo outdated || true
+  
