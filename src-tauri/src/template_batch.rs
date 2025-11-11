@@ -1071,14 +1071,26 @@ fn data_has_value(value: &Data) -> bool {
 fn data_to_value(value: &Data) -> Value {
     match value {
         Data::String(s) => parse_string_value(s),
-        Data::Float(v) => Number::from_f64(*v)
-            .map(Value::Number)
-            .unwrap_or(Value::Null),
+        Data::Float(v) => float_to_number(*v),
         Data::Int(v) => Value::Number((*v).into()),
         Data::Bool(v) => Value::Bool(*v),
         Data::Empty | Data::Error(_) => Value::Null,
         other => Value::String(other.to_string()),
     }
+}
+
+fn float_to_number(value: f64) -> Value {
+    if value.is_finite() {
+        let truncated = value.trunc();
+        if (value - truncated).abs() < f64::EPSILON {
+            if truncated >= i64::MIN as f64 && truncated <= i64::MAX as f64 {
+                return Value::Number((truncated as i64).into());
+            }
+        }
+    }
+    Number::from_f64(value)
+        .map(Value::Number)
+        .unwrap_or(Value::Null)
 }
 
 fn iterable_value_is_valid(value: &Value) -> bool {
