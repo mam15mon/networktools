@@ -3,9 +3,9 @@
 </p>
 <h1 align="center">NetworkTools</h1>
 <p align="center">
-一个功能强大的网络工具集，基于 <a href="https://nuxt.com">Nuxt 4</a> 和 <a href="https://v2.tauri.app">Tauri 2</a> 构建
+基于 <a href="https://nuxt.com">Nuxt 4</a> 和 <a href="https://v2.tauri.app">Tauri 2</a> 构建的网络工具集
 <br>
-专业的网络分析与管理工具！
+网络分析与管理工具
 </p>
 
 <br />
@@ -102,6 +102,30 @@ bun run tauri:build:debug
 
 构建产物将生成在 `src-tauri/target` 目录中。
 
+## 🔄 CI/CD
+
+项目配置了完整的GitHub Actions工作流：
+
+### 工作流文件
+- **`.github/workflows/ci.yml`** - 持续集成，包含测试和构建
+- **`.github/workflows/release.yml`** - 自动发布，支持多平台构建
+- **`.github/workflows/code-quality.yml`** - 代码质量检查
+
+### CI流程
+1. **后端测试** - Rust单元测试、格式检查、代码检查
+2. **前端测试** - TypeScript类型检查、ESLint、构建测试
+3. **多平台构建** - Windows、macOS、Linux应用构建
+4. **代码质量** - 安全审计、依赖检查、代码规范
+
+### 发布流程
+- 推送标签（如`v1.0.0`）自动触发发布
+- 自动生成各平台安装包
+- GitHub Release自动创建
+
+### 必需的Secrets
+- `TAURI_PRIVATE_KEY` - Tauri签名私钥
+- `TAURI_KEY_PASSWORD` - 私钥密码
+
 ## 🔧 配置说明
 
 ### 端口配置
@@ -128,24 +152,48 @@ Tauri v2 需要在 `src-tauri/capabilities/main.json` 中配置权限：
 
 ```
 networktools/
-├── app/                    # Nuxt 前端代码
-│   ├── components/        # Vue 组件
-│   ├── layouts/           # 布局文件
-│   ├── pages/             # 页面路由
-│   └── app.vue           # 根组件
-├── src-tauri/             # Tauri 后端代码
-│   ├── src/              # Rust 源码
-│   │   ├── ipv4_subnet.rs
-│   │   ├── ipv6_subnet.rs
-│   │   ├── ipv4_summary.rs
-│   │   ├── ip_location.rs
-│   │   ├── nat_parser.rs
-│   │   └── lib.rs
-│   ├── Cargo.toml        # Rust 依赖配置
-│   └── tauri.conf.json   # Tauri 应用配置
-├── package.json          # Node.js 依赖配置
-├── nuxt.config.ts        # Nuxt 框架配置
-└── README.md            # 项目文档
+├── app/                           # Nuxt 前端代码
+│   ├── components/               # Vue 组件
+│   │   ├── Config/              # 配置相关组件
+│   │   ├── Design/              # 设计组件
+│   │   ├── Layout/              # 布局组件
+│   │   ├── Site/                # 站点组件
+│   │   └── template-batch/      # 模板批量组件
+│   ├── composables/             # Vue 组合式函数
+│   ├── layouts/                 # 布局文件
+│   ├── modules/                 # Nuxt 模块
+│   ├── pages/                   # 页面路由
+│   │   ├── nat-batch/          # NAT 批量生成页面
+│   │   ├── ipv4-subnet.vue     # IPv4 子网计算
+│   │   ├── ipv4-summary.vue    # IPv4 地址汇总
+│   │   ├── ipv6-subnet.vue     # IPv6 子网计算
+│   │   ├── ip-location.vue     # IP 地理位置查询
+│   │   ├── nat-parser.vue      # NAT 配置解析
+│   │   ├── template-batch/     # 模板批量生成
+│   │   └── vsr-batch.vue       # VSR 批量配置
+│   ├── app.config.ts           # 应用配置
+│   └── app.vue                 # 根组件
+├── src-tauri/                    # Tauri 后端代码
+│   ├── src/                    # Rust 源码
+│   │   ├── ip_location.rs      # IP 地理位置查询
+│   │   ├── ipv4_subnet.rs      # IPv4 子网计算
+│   │   ├── ipv4_summary.rs     # IPv4 地址汇总
+│   │   ├── ipv6_subnet.rs      # IPv6 子网计算
+│   │   ├── isp_manager.rs      # ISP 管理器
+│   │   ├── nat_batch_generator.rs # NAT 批量生成
+│   │   ├── nat_parser.rs       # NAT 配置解析
+│   │   ├── template_batch.rs   # 模板批量生成
+│   │   ├── vsr_batch.rs        # VSR 批量配置
+│   │   ├── lib.rs              # Tauri 命令注册
+│   │   └── main.rs             # 应用入口
+│   ├── Cargo.toml             # Rust 依赖配置
+│   └── tauri.conf.json        # Tauri 应用配置
+├── types/                       # TypeScript 类型定义
+│   ├── nat-batch.ts           # NAT 批量类型
+│   └── template-batch.ts      # 模板批量类型
+├── package.json               # Node.js 依赖配置
+├── nuxt.config.ts             # Nuxt 框架配置
+└── README.md                  # 项目文档
 ```
 
 ## 🧪 开发指南
@@ -194,7 +242,7 @@ A: 需要更新 GeoIP 数据库，或检查网络连接
 
 ## 🙏 致谢
 
-- [Nuxt](https://nuxt.com) - 强大的 Vue.js 框架
+- [Nuxt](https://nuxt.com) - Vue.js 框架
 - [Tauri](https://tauri.app) - 轻量级桌面应用框架
 - [NuxtUI](https://ui.nuxt.com) - 优雅的 UI 组件库
 - [TailwindCSS](https://tailwindcss.com) - 实用优先的 CSS 框架

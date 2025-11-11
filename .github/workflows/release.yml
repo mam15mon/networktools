@@ -1,9 +1,9 @@
-name: release
+name: Release
 
 on:
   push:
-    branches:
-      - release
+    tags:
+      - 'v*'
 jobs:
   publish-tauri:
     permissions:
@@ -55,9 +55,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: nuxtor-v__VERSION__
-          releaseName: Nuxtor v__VERSION__
-          releaseBody: After installing the Apple app you have to run "xattr -c /Applications/Nuxtor.app" once before launching
+          tagName: v__VERSION__
+          releaseName: NetworkTools v__VERSION__
+          releaseBody: NetworkTools release with cross-platform support
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
