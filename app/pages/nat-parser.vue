@@ -5,14 +5,14 @@
 	>
 		<div class="space-y-8">
 			<!-- 设备类型选择 -->
-		<UCard class="bg-(--ui-bg)">
-			<template #header>
-				<div class="flex items-center gap-2">
-					<Icon name="i-lucide-settings" class="size-5" />
-					<h3 class="text-lg font-semibold">
-						设备类型
-					</h3>
-				</div>
+			<UCard class="bg-(--ui-bg)">
+				<template #header>
+					<div class="flex items-center gap-2">
+						<Icon name="i-lucide-settings" class="size-5" />
+						<h3 class="text-lg font-semibold">
+							设备类型
+						</h3>
+					</div>
 				</template>
 				<URadioGroup
 					v-model="deviceType"
@@ -23,14 +23,14 @@
 			</UCard>
 
 			<!-- 配置输入 -->
-		<UCard class="bg-(--ui-bg)">
-			<template #header>
-				<div class="flex items-center gap-2">
-					<Icon name="i-lucide-terminal" class="size-5" />
-					<h3 class="text-lg font-semibold">
-						NAT Server 配置
-					</h3>
-				</div>
+			<UCard class="bg-(--ui-bg)">
+				<template #header>
+					<div class="flex items-center gap-2">
+						<Icon name="i-lucide-terminal" class="size-5" />
+						<h3 class="text-lg font-semibold">
+							NAT Server 配置
+						</h3>
+					</div>
 				</template>
 				<div class="space-y-4">
 					<UTextarea
@@ -69,45 +69,45 @@
 			<!-- 解析结果 -->
 			<div v-if="parseResult.successEntries.length > 0 || parseResult.failedEntries.length > 0" class="space-y-6">
 				<!-- 统计信息 -->
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<UCard class="bg-(--ui-bg)">
-					<div class="text-center space-y-2">
-						<UBadge variant="soft" color="green" size="lg" class="text-2xl font-bold">
-							{{ parseResult.successEntries.length }}
-						</UBadge>
-						<p class="text-sm text-(--ui-text-muted)">
-							成功解析
-						</p>
-					</div>
-				</UCard>
-				<UCard class="bg-(--ui-bg)">
-					<div class="text-center space-y-2">
-						<UBadge variant="soft" color="red" size="lg" class="text-2xl font-bold">
-							{{ parseResult.failedEntries.length }}
-						</UBadge>
-						<p class="text-sm text-(--ui-text-muted)">
-							解析失败
-						</p>
-					</div>
-				</UCard>
-				<UCard class="bg-(--ui-bg)">
-					<div class="text-center space-y-2">
-						<UBadge variant="soft" color="blue" size="lg" class="text-2xl font-bold">
-							{{ totalEntries }}
-						</UBadge>
-						<p class="text-sm text-(--ui-text-muted)">
-							总条目数
-						</p>
-					</div>
-				</UCard>
-			</div>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<UCard class="bg-(--ui-bg)">
+						<div class="text-center space-y-2">
+							<UBadge variant="soft" color="green" size="lg" class="text-2xl font-bold">
+								{{ parseResult.successEntries.length }}
+							</UBadge>
+							<p class="text-sm text-(--ui-text-muted)">
+								成功解析
+							</p>
+						</div>
+					</UCard>
+					<UCard class="bg-(--ui-bg)">
+						<div class="text-center space-y-2">
+							<UBadge variant="soft" color="red" size="lg" class="text-2xl font-bold">
+								{{ parseResult.failedEntries.length }}
+							</UBadge>
+							<p class="text-sm text-(--ui-text-muted)">
+								解析失败
+							</p>
+						</div>
+					</UCard>
+					<UCard class="bg-(--ui-bg)">
+						<div class="text-center space-y-2">
+							<UBadge variant="soft" color="blue" size="lg" class="text-2xl font-bold">
+								{{ totalEntries }}
+							</UBadge>
+							<p class="text-sm text-(--ui-text-muted)">
+								总条目数
+							</p>
+						</div>
+					</UCard>
+				</div>
 
 				<!-- 成功解析的条目 -->
 				<div v-if="parseResult.successEntries.length > 0">
-				<div class="flex justify-between items-center mb-4">
-					<h3 class="text-xl font-semibold">
-						解析结果
-					</h3>
+					<div class="flex justify-between items-center mb-4">
+						<h3 class="text-xl font-semibold">
+							解析结果
+						</h3>
 						<UButton
 							icon="i-lucide-download"
 							:disabled="parseResult.successEntries.length === 0"
@@ -127,10 +127,10 @@
 				</div>
 
 				<!-- 解析失败的条目 -->
-			<div v-if="parseResult.failedEntries.length > 0">
-				<h3 class="text-xl mb-4 font-semibold text-red-600">
-					解析失败条目
-				</h3>
+				<div v-if="parseResult.failedEntries.length > 0">
+					<h3 class="text-xl mb-4 font-semibold text-red-600">
+						解析失败条目
+					</h3>
 					<UCard class="bg-(--ui-bg-muted) border-(--ui-border)">
 						<div class="space-y-2">
 							<div
@@ -146,14 +146,14 @@
 			</div>
 
 			<!-- 使用说明 -->
-		<UCard class="bg-(--ui-bg)">
-			<template #header>
-				<div class="flex items-center gap-2">
-					<Icon name="i-lucide-help-circle" class="size-5" />
-					<h3 class="text-lg font-semibold">
-						使用说明
-					</h3>
-				</div>
+			<UCard class="bg-(--ui-bg)">
+				<template #header>
+					<div class="flex items-center gap-2">
+						<Icon name="i-lucide-help-circle" class="size-5" />
+						<h3 class="text-lg font-semibold">
+							使用说明
+						</h3>
+					</div>
 				</template>
 				<div class="space-y-4 text-sm">
 					<div class="flex items-start gap-2">
@@ -277,14 +277,6 @@
 		}))
 	);
 
-	// 处理粘贴事件
-	const handlePaste = (event: ClipboardEvent) => {
-		// 延迟一点确保粘贴内容已经更新到 v-model
-		setTimeout(() => {
-			parseConfig();
-		}, 100);
-	};
-
 	// 解析配置
 	const parseConfig = async () => {
 		if (!configText.value.trim()) {
@@ -310,6 +302,14 @@
 				deviceType: deviceType.value
 			};
 		}
+	};
+
+	// 处理粘贴事件
+	const handlePaste = (_event: ClipboardEvent) => {
+		// 延迟一点确保粘贴内容已经更新到 v-model
+		setTimeout(() => {
+			parseConfig();
+		}, 100);
 	};
 
 	// 清空配置
@@ -340,11 +340,27 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 		parseConfig();
 	};
 
+	// 保存文件的通用函数
+	const saveFile = async (blob: Blob, fileName: string) => {
+		const { save } = await import("@tauri-apps/plugin-dialog");
+		const targetPath = await save({
+			defaultPath: fileName,
+			filters: [{ name: "Excel", extensions: ["xlsx"] }]
+		});
+		if (!targetPath) {
+			return;
+		}
 
+		const arrayBuffer = await blob.arrayBuffer();
+		const { writeFile } = await import("@tauri-apps/plugin-fs");
+		await writeFile(targetPath, new Uint8Array(arrayBuffer));
 
-	// 处理导出点击事件
-	const handleExportClick = () => {
-		exportToExcel();
+		toast.add({
+			title: "导出成功",
+			description: `文件已保存到 ${targetPath}`,
+			icon: "i-lucide-check-circle",
+			timeout: 4000
+		});
 	};
 
 	// 导出到 Excel
@@ -431,28 +447,9 @@ nat server protocol tcp global 202.100.10.4 80 inside 192.168.1.200 80 rule 103 
 		}
 	};
 
-	// 保存文件的通用函数
-	const saveFile = async (blob: Blob, fileName: string) => {
-		const { save } = await import("@tauri-apps/plugin-dialog");
-		const targetPath = await save({
-			defaultPath: fileName,
-			filters: [{ name: "Excel", extensions: ["xlsx"] }]
-		});
-		if (!targetPath) {
-			return;
-		}
-
-		const arrayBuffer = await blob.arrayBuffer();
-		const { writeFile } = await import("@tauri-apps/plugin-fs");
-		await writeFile(targetPath, new Uint8Array(arrayBuffer));
-
-
-		toast.add({
-			title: "导出成功",
-			description: `文件已保存到 ${targetPath}`,
-			icon: "i-lucide-check-circle",
-			timeout: 4000
-		});
+	// 处理导出点击事件
+	const handleExportClick = () => {
+		exportToExcel();
 	};
 
 	// 监听设备类型变化

@@ -55,30 +55,38 @@
 									<Icon name="i-lucide-variable" class="size-4 text-(--ui-text-muted)" />
 									<span class="text-xs font-medium text-(--ui-text-muted)">检测变量</span>
 								</div>
-								<p class="text-lg font-semibold">{{ templateState.analysis.variableCount }}</p>
+								<p class="text-lg font-semibold">
+									{{ templateState.analysis.variableCount }}
+								</p>
 							</div>
 							<div class="p-3 bg-(--ui-bg-muted) rounded-lg">
 								<div class="flex items-center gap-2 mb-1">
 									<Icon name="i-lucide-git-branch" class="size-4 text-(--ui-text-muted)" />
 									<span class="text-xs font-medium text-(--ui-text-muted)">循环控制</span>
 								</div>
-								<p class="text-lg font-semibold">{{ getLoopCountText() }}</p>
+								<p class="text-lg font-semibold">
+									{{ getLoopCountText() }}
+								</p>
 							</div>
 							<div class="p-3 bg-(--ui-bg-muted) rounded-lg">
 								<div class="flex items-center gap-2 mb-1">
 									<Icon name="i-lucide-git-merge" class="size-4 text-(--ui-text-muted)" />
 									<span class="text-xs font-medium text-(--ui-text-muted)">条件渲染</span>
 								</div>
-								<p class="text-lg font-semibold">{{ getConditionalCountText() }}</p>
+								<p class="text-lg font-semibold">
+									{{ getConditionalCountText() }}
+								</p>
 							</div>
 							<div class="p-3 bg-(--ui-bg-muted) rounded-lg">
 								<div class="flex items-center gap-2 mb-1">
 									<Icon name="i-lucide-rotate-ccw" class="size-4 text-(--ui-text-muted)" />
 									<span class="text-xs font-medium text-(--ui-text-muted)">默认回退</span>
 								</div>
-								<p class="text-lg font-semibold">{{ getDefaultFallbackText() }}</p>
+								<p class="text-lg font-semibold">
+									{{ getDefaultFallbackText() }}
+								</p>
 							</div>
-													</div>
+						</div>
 
 						<div v-if="templateState.analysis.variables.length" class="space-y-3">
 							<div class="flex items-center justify-between">
@@ -119,8 +127,12 @@
 								<table class="min-w-full text-sm">
 									<thead class="bg-(--ui-bg-muted)">
 										<tr>
-											<th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">变量</th>
-											<th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">示例值</th>
+											<th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">
+												变量
+											</th>
+											<th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">
+												示例值
+											</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -130,7 +142,9 @@
 											class="border-t border-(--ui-border) cursor-pointer hover:bg-(--ui-bg-muted)"
 											@click="openVariableDrawer(insight.name)"
 										>
-											<td class="px-3 py-2 font-medium text-(--ui-text)">{{ insight.name }}</td>
+											<td class="px-3 py-2 font-medium text-(--ui-text)">
+												{{ insight.name }}
+											</td>
 											<td class="px-3 py-2 font-mono text-xs text-(--ui-text-muted)">
 												{{ insight.sample }}
 											</td>
@@ -201,86 +215,86 @@
 						</div>
 
 						<div v-if="excelState.preview.columns.length" class="space-y-3">
-								<div class="flex items-center justify-between">
-									<h4 class="text-base font-semibold">
-										列映射验证
-									</h4>
-									<div class="flex items-center gap-2">
-										<div v-if="columnValidationStatus.isValid" class="flex items-center gap-1 text-xs text-green-600">
-											<Icon name="i-lucide-check-circle" class="size-3" />
-											<span>验证通过</span>
-										</div>
-										<div v-else class="flex items-center gap-1 text-xs text-red-600">
-											<Icon name="i-lucide-alert-circle" class="size-3" />
-											<span>
-												<template v-if="columnValidationStatus.missingVariables.length">
-													缺少必需列
-												</template>
-												<template v-else>
-													必需列缺少有效数据
-												</template>
-											</span>
-										</div>
+							<div class="flex items-center justify-between">
+								<h4 class="text-base font-semibold">
+									列映射验证
+								</h4>
+								<div class="flex items-center gap-2">
+									<div v-if="columnValidationStatus.isValid" class="flex items-center gap-1 text-xs text-green-600">
+										<Icon name="i-lucide-check-circle" class="size-3" />
+										<span>验证通过</span>
+									</div>
+									<div v-else class="flex items-center gap-1 text-xs text-red-600">
+										<Icon name="i-lucide-alert-circle" class="size-3" />
+										<span>
+											<template v-if="columnValidationStatus.missingVariables.length">
+												缺少必需列
+											</template>
+											<template v-else>
+												必需列缺少有效数据
+											</template>
+										</span>
 									</div>
 								</div>
+							</div>
 
-								<div v-if="columnValidationStatus.missingVariables.length" class="space-y-2">
-									<p class="text-sm text-red-600">
-										缺少以下变量对应的列：
-									</p>
-									<div class="flex flex-wrap gap-2">
-										<UBadge
-											v-for="variable in columnValidationStatus.missingVariables"
-											:key="variable"
-											variant="error"
-											size="sm"
-										>
-											{{ variable }}
-										</UBadge>
-									</div>
+							<div v-if="columnValidationStatus.missingVariables.length" class="space-y-2">
+								<p class="text-sm text-red-600">
+									缺少以下变量对应的列：
+								</p>
+								<div class="flex flex-wrap gap-2">
+									<UBadge
+										v-for="variable in columnValidationStatus.missingVariables"
+										:key="variable"
+										variant="error"
+										size="sm"
+									>
+										{{ variable }}
+									</UBadge>
 								</div>
+							</div>
 
-								<div v-if="columnValidationStatus.emptyVariables.length" class="space-y-2">
-									<p class="text-sm text-amber-600">
-										以下列存在但没有可用数据，无法生成配置：
-									</p>
-									<div class="flex flex-wrap gap-2">
-										<UBadge
-											v-for="variable in columnValidationStatus.emptyVariables"
-											:key="`empty-${variable}`"
-											variant="outline"
-											size="sm"
-										>
-											{{ variable }}
-										</UBadge>
-									</div>
-									<p class="text-xs text-(--ui-text-muted)">
-										请在 Excel 中至少为这些列提供一条非空数据后重新解析。
-									</p>
+							<div v-if="columnValidationStatus.emptyVariables.length" class="space-y-2">
+								<p class="text-sm text-amber-600">
+									以下列存在但没有可用数据，无法生成配置：
+								</p>
+								<div class="flex flex-wrap gap-2">
+									<UBadge
+										v-for="variable in columnValidationStatus.emptyVariables"
+										:key="`empty-${variable}`"
+										variant="outline"
+										size="sm"
+									>
+										{{ variable }}
+									</UBadge>
 								</div>
+								<p class="text-xs text-(--ui-text-muted)">
+									请在 Excel 中至少为这些列提供一条非空数据后重新解析。
+								</p>
+							</div>
 
-								<div v-if="columnValidationStatus.invalidIterableVariables.length" class="space-y-2">
-									<p class="text-sm text-amber-600">
-										以下列必须填写“由 JSON 对象组成的数组”或“单个 JSON 对象”（示例：
-										<code class="px-1 py-0.5 rounded bg-(--ui-bg-muted)">
-											[{"id":1,"name":"Core","ip":"10.0.0.1","mask":"255.255.255.0"}]
-										</code>
-										），且数组元素不得再是数组，请检查填充内容：
-									</p>
-									<div class="flex flex-wrap gap-2">
-										<UBadge
-											v-for="variable in columnValidationStatus.invalidIterableVariables"
-											:key="`invalid-${variable}`"
-											variant="outline"
-											size="sm"
-										>
-											{{ variable }}
-										</UBadge>
-									</div>
-									<p class="text-xs text-(--ui-text-muted)">
-										模板中通过 <code>{% for %}</code> 使用这些变量时，Excel 列必须提供合法 JSON 结构，否则无法生成配置。
-									</p>
+							<div v-if="columnValidationStatus.invalidIterableVariables.length" class="space-y-2">
+								<p class="text-sm text-amber-600">
+									以下列必须填写“由 JSON 对象组成的数组”或“单个 JSON 对象”（示例：
+									<code class="px-1 py-0.5 rounded bg-(--ui-bg-muted)">
+										[{"id":1,"name":"Core","ip":"10.0.0.1","mask":"255.255.255.0"}]
+									</code>
+									），且数组元素不得再是数组，请检查填充内容：
+								</p>
+								<div class="flex flex-wrap gap-2">
+									<UBadge
+										v-for="variable in columnValidationStatus.invalidIterableVariables"
+										:key="`invalid-${variable}`"
+										variant="outline"
+										size="sm"
+									>
+										{{ variable }}
+									</UBadge>
 								</div>
+								<p class="text-xs text-(--ui-text-muted)">
+									模板中通过 <code>{% for %}</code> 使用这些变量时，Excel 列必须提供合法 JSON 结构，否则无法生成配置。
+								</p>
+							</div>
 
 							<div class="space-y-2">
 								<div class="flex items-center justify-between">
@@ -299,7 +313,6 @@
 				</div>
 			</UCard>
 
-			
 			<!-- 配置生成 -->
 			<UCard v-if="canGenerateConfigs" class="bg-(--ui-bg)">
 				<template #header>
@@ -410,8 +423,7 @@
 					</div>
 				</div>
 			</UCard>
-
-						</div>
+		</div>
 		<UDrawer
 			v-model:open="variableDrawer.open"
 			direction="right"
@@ -421,20 +433,26 @@
 			<template #body>
 				<div v-if="activeVariableInsight" class="space-y-4 p-4">
 					<div>
-						<h3 class="text-lg font-semibold">{{ activeVariableInsight.name }}</h3>
+						<h3 class="text-lg font-semibold">
+							{{ activeVariableInsight.name }}
+						</h3>
 						<p class="text-xs text-(--ui-text-muted)">
 							变量详情
 						</p>
 					</div>
 					<div v-if="shouldShowSample(activeVariableInsight)">
-						<p class="text-sm text-(--ui-text-muted)">模板示例值：</p>
+						<p class="text-sm text-(--ui-text-muted)">
+							模板示例值：
+						</p>
 						<p class="font-mono text-xs bg-(--ui-bg-muted) p-2 rounded border border-(--ui-border)">
 							{{ activeVariableInsight.sample }}
 						</p>
 					</div>
 
 					<div>
-						<h4 class="text-sm font-semibold">字段特性</h4>
+						<h4 class="text-sm font-semibold">
+							字段特性
+						</h4>
 						<div class="flex flex-wrap gap-2 mt-2">
 							<UBadge v-if="activeVariableInsight.tags.loop" variant="subtle" color="blue">
 								循环
@@ -472,15 +490,21 @@
 					</div>
 
 					<div v-if="activeVariableInsight.defaultFallback">
-						<h4 class="text-sm font-semibold">默认回退</h4>
+						<h4 class="text-sm font-semibold">
+							默认回退
+						</h4>
 						<p class="text-sm text-(--ui-text-muted)">
 							留空时默认使用 <span class="font-mono">{{ activeVariableInsight.defaultFallback }}</span>
 						</p>
 					</div>
 
 					<div v-if="activeVariableInsight.conditionalValues.length">
-						<h4 class="text-sm font-semibold">条件示例</h4>
-						<p class="text-xs text-(--ui-text-muted)">模板检测到以下典型取值：</p>
+						<h4 class="text-sm font-semibold">
+							条件示例
+						</h4>
+						<p class="text-xs text-(--ui-text-muted)">
+							模板检测到以下典型取值：
+						</p>
 						<div class="flex flex-wrap gap-1 mt-1">
 							<UBadge
 								v-for="(value, index) in activeVariableInsight.conditionalValues"
@@ -494,22 +518,27 @@
 					</div>
 
 					<div class="flex justify-end">
-						<UButton variant="outline" @click="closeVariableDrawer">关闭</UButton>
+						<UButton variant="outline" @click="closeVariableDrawer">
+							关闭
+						</UButton>
 					</div>
 				</div>
-				<div v-else class="text-sm text-(--ui-text-muted) p-4">未找到变量信息。</div>
+				<div v-else class="text-sm text-(--ui-text-muted) p-4">
+					未找到变量信息。
+				</div>
 			</template>
 		</UDrawer>
-		</LayoutTile>
-	</template>
+	</LayoutTile>
+</template>
 
 <script lang="ts" setup>
 	import type {
-		TeraTemplateAnalysis,
+		GenericGeneratedConfig,
 		TemplateExcelPreview,
-		GenericGeneratedConfig
+		TeraTemplateAnalysis
 	} from "~/types/template-batch";
 	import { computed, reactive, ref, watch } from "vue";
+	import { extractErrorMessage } from "~/utils/error";
 
 	const FORMATTING_FILTERS = [
 		"upper",
@@ -536,7 +565,6 @@
 		replace: "替换字符",
 		escape: "自动转义特殊字符"
 	};
-	import { extractErrorMessage } from "~/utils/error";
 
 	definePageMeta({
 		name: "模板批量生成",
@@ -565,26 +593,26 @@
 	// 其他状态
 	const labelField = ref("");
 
-// 当模板分析完成时，自动选择第一个变量作为标识字段
-watch(
-	() => templateState.analysis?.variables,
-	(variables) => {
-		if (variables && variables.length > 0) {
-			labelField.value = variables[0];
-		}
-	},
-	{ immediate: true }
-);
+	// 当模板分析完成时，自动选择第一个变量作为标识字段
+	watch(
+		() => templateState.analysis?.variables,
+		(variables) => {
+			if (variables && variables.length > 0) {
+				labelField.value = variables[0];
+			}
+		},
+		{ immediate: true }
+	);
 	const generationLoading = ref(false);
 	const generationErrors = ref<string[]>([]);
-		const generatedConfigs = ref<GenericGeneratedConfig[]>([]);
-		const expandedConfigs = ref<Record<number, boolean>>({});
+	const generatedConfigs = ref<GenericGeneratedConfig[]>([]);
+	const expandedConfigs = ref<Record<number, boolean>>({});
 	const showAllConfigs = ref(false);
-		const variableDrawerDescription = "查看变量的示例值与校验提示";
-		const variableDrawer = reactive({
-			open: false,
-			variable: ""
-		});
+	const variableDrawerDescription = "查看变量的示例值与校验提示";
+	const variableDrawer = reactive({
+		open: false,
+		variable: ""
+	});
 
 	// 计算属性
 	const excelPreviewColumns = computed(() => {
@@ -619,20 +647,20 @@ watch(
 		const invalidIterableColumns = excelState.preview.invalidIterableColumns || [];
 
 		const missingVariables = requiredVariables.filter(
-			variable => !availableColumns.includes(variable)
+			(variable) => !availableColumns.includes(variable)
 		);
 		const emptyVariables = requiredVariables
-			.filter(variable => availableColumns.includes(variable))
-			.filter(variable => !columnsWithData.includes(variable));
+			.filter((variable) => availableColumns.includes(variable))
+			.filter((variable) => !columnsWithData.includes(variable));
 		const invalidIterableVariables = templateState.analysis.iterableVariables
-			.filter(variable => availableColumns.includes(variable))
-			.filter(variable => invalidIterableColumns.includes(variable));
+			.filter((variable) => availableColumns.includes(variable))
+			.filter((variable) => invalidIterableColumns.includes(variable));
 
 		return {
 			isValid:
-				missingVariables.length === 0 &&
-				emptyVariables.length === 0 &&
-				invalidIterableVariables.length === 0,
+				missingVariables.length === 0
+				&& emptyVariables.length === 0
+				&& invalidIterableVariables.length === 0,
 			missingVariables,
 			emptyVariables,
 			invalidIterableVariables
@@ -686,11 +714,10 @@ watch(
 		return variableInsightsMap.value.get(variableDrawer.variable) ?? null;
 	});
 
-	
 	const canGenerateConfigs = computed(() => {
-		return templateState.analysis &&
-			   excelState.preview &&
-			   columnValidationStatus.value.isValid;
+		return templateState.analysis
+			&& excelState.preview
+			&& columnValidationStatus.value.isValid;
 	});
 
 	const displayConfigs = computed(() => {
@@ -698,7 +725,6 @@ watch(
 		return generatedConfigs.value.slice(0, 5);
 	});
 
-	
 	// 方法
 	function handleReanalyzeTemplate() {
 		if (templateState.filePath) {
@@ -739,14 +765,6 @@ watch(
 		return templateState.analysis?.defaultFallbacks?.[variable];
 	}
 
-	function hasLoopUsage(variable: string): boolean {
-		return iterableVariableSet.value.has(variable);
-	}
-
-	function hasConditionalUsage(variable: string): boolean {
-		return conditionalVariableSet.value.has(variable);
-	}
-
 	function formatExampleList(values: string[]): string {
 		if (!values || !values.length) return "示例缺失";
 		const preview = values.slice(0, 3).join(" / ");
@@ -770,7 +788,7 @@ watch(
 
 	function buildSampleValue(
 		variable: string,
-		tags: { loop: boolean; conditional: boolean; defaultable: boolean; formatting: boolean }
+		tags: { loop: boolean, conditional: boolean, defaultable: boolean, formatting: boolean }
 	): string {
 		if (tags.loop) {
 			return `[{"id":1,"name":"${variable}示例","ip":"10.0.0.1","mask":"255.255.255.0"}]`;
@@ -886,22 +904,22 @@ watch(
 			});
 			if (!path) return;
 
-				await useTauriCoreInvoke("export_tera_variable_template", {
-					request: {
-						path,
-						variables: templateState.analysis.variables,
-						iterableVariables: templateState.analysis.iterableVariables,
-						sampleValues: templateState.analysis.sampleValues || {},
-						defaultFallbacks: templateState.analysis.defaultFallbacks || {},
-						filterUsage: templateState.analysis.filterUsage || {}
-					}
-				});
+			await useTauriCoreInvoke("export_tera_variable_template", {
+				request: {
+					path,
+					variables: templateState.analysis.variables,
+					iterableVariables: templateState.analysis.iterableVariables,
+					sampleValues: templateState.analysis.sampleValues || {},
+					defaultFallbacks: templateState.analysis.defaultFallbacks || {},
+					filterUsage: templateState.analysis.filterUsage || {}
+				}
+			});
 
-				toast.add({
-					title: "变量模板导出成功",
-					description: `模板已保存到 ${path}（首行为变量名，第二行为示例，可按需修改）`,
-					color: "success"
-				});
+			toast.add({
+				title: "变量模板导出成功",
+				description: `模板已保存到 ${path}（首行为变量名，第二行为示例，可按需修改）`,
+				color: "success"
+			});
 		} catch (error) {
 			toast.add({
 				title: "导出失败",
@@ -996,16 +1014,16 @@ watch(
 		generationErrors.value = [];
 
 		try {
-				const configs = await useTauriCoreInvoke<GenericGeneratedConfig[]>("generate_template_configs", {
-					request: {
-						templatePath: templateState.filePath,
-						excelPath: excelState.filePath,
-						sheetName: excelState.selectedSheet || undefined,
-						expectedVariables: templateState.analysis.variables,
-						labelField: labelField.value || undefined,
-						iterableVariables: templateState.analysis.iterableVariables
-					}
-				});
+			const configs = await useTauriCoreInvoke<GenericGeneratedConfig[]>("generate_template_configs", {
+				request: {
+					templatePath: templateState.filePath,
+					excelPath: excelState.filePath,
+					sheetName: excelState.selectedSheet || undefined,
+					expectedVariables: templateState.analysis.variables,
+					labelField: labelField.value || undefined,
+					iterableVariables: templateState.analysis.iterableVariables
+				}
+			});
 
 			generatedConfigs.value = configs;
 			expandedConfigs.value = {};
@@ -1052,7 +1070,6 @@ watch(
 		}
 	}
 
-	
 	async function exportToExcel() {
 		try {
 			const { save } = await import("@tauri-apps/plugin-dialog");

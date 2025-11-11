@@ -65,7 +65,7 @@ pub async fn get_public_ip() -> Result<String, String> {
                         // 特殊处理 ipip.net 的格式
                         if service.contains("ipip.net") {
                             // 从 "当前 IP：111.205.145.129  来自于：中国 北京 北京  联通" 中提取 IP
-                            if let Some(ip) = extract_ip_from_ipip_text(&ip_text) {
+                            if let Some(ip) = extract_ip_from_ipip_text(ip_text) {
                                 return Ok(ip);
                             }
                         } else {
@@ -289,14 +289,14 @@ fn derive_type(ip_int: u32, ip_class: &str) -> String {
     let first = (ip_int >> 24) as u8;
     let second = ((ip_int >> 16) & 0xff) as u8;
 
-    if first == 10 {
-        "Private".into()
-    } else if first == 172 && (16..=31).contains(&second) {
-        "Private".into()
-    } else if first == 192 && second == 168 {
-        "Private".into()
-    } else if first == 169 && second == 254 {
-        "Link-local".into()
+	let is_private = first == 10
+		|| (first == 172 && (16..=31).contains(&second))
+		|| (first == 192 && second == 168);
+
+	if is_private {
+		"Private".into()
+	} else if first == 169 && second == 254 {
+		"Link-local".into()
     } else if first == 127 {
         "Loopback".into()
     } else if first == 100 && (64..=127).contains(&second) {

@@ -66,7 +66,7 @@ pub fn compute_ipv6_subnet(input: &str) -> Result<Ipv6SubnetResult, String> {
     while generated < display_count {
         addresses.push(format_full_ipv6(&biguint_to_ipv6(&current)));
         current = &current + BigUint::one();
-        generated = generated + BigUint::one();
+		generated += BigUint::one();
     }
 
     let total_ip_addresses = format_biguint(&total_addresses);

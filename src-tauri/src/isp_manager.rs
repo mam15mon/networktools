@@ -1,7 +1,7 @@
 use ipnet::IpNet;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{self, Value};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{hash_map::Entry, BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::io::{Cursor, Read};
 use std::net::{IpAddr, Ipv4Addr};
@@ -322,18 +322,21 @@ pub fn bulk_add_elastic_ip_mappings(
             }
         };
 
-        if mapping.contains_key(&internal_ip) {
-            if request.overwrite_existing {
-                mapping.insert(internal_ip, elastic_ip);
-                updated += 1;
-            } else {
-                skipped += 1;
-            }
-        } else {
-            mapping.insert(internal_ip, elastic_ip);
-            added += 1;
-        }
-    }
+		match mapping.entry(internal_ip) {
+			Entry::Occupied(mut entry) => {
+				if request.overwrite_existing {
+					entry.insert(elastic_ip);
+					updated += 1;
+				} else {
+					skipped += 1;
+				}
+			}
+			Entry::Vacant(entry) => {
+				entry.insert(elastic_ip);
+				added += 1;
+			}
+		}
+	}
 
     save_elastic_ip_mapping_internal(&mapping)?;
 

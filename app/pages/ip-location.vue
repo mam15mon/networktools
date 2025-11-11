@@ -94,10 +94,10 @@
 						<UCard class="bg-(--ui-bg)">
 							<template #header>
 								<div class="flex items-center gap-2">
-							<Icon name="i-lucide-globe" class="size-5" />
-							<h4 class="text-lg font-semibold">
-								IP 地址信息
-							</h4>
+									<Icon name="i-lucide-globe" class="size-5" />
+									<h4 class="text-lg font-semibold">
+										IP 地址信息
+									</h4>
 								</div>
 							</template>
 							<div class="space-y-4">
@@ -124,10 +124,10 @@
 						<UCard class="bg-(--ui-bg)">
 							<template #header>
 								<div class="flex items-center gap-2">
-							<Icon name="i-lucide-map-pin" class="size-5" />
-							<h4 class="text-lg font-semibold">
-								地理位置
-							</h4>
+									<Icon name="i-lucide-map-pin" class="size-5" />
+									<h4 class="text-lg font-semibold">
+										地理位置
+									</h4>
 								</div>
 							</template>
 							<div class="space-y-4">
@@ -233,21 +233,6 @@
 		category: "tools"
 	});
 
-	// 页面加载时获取数据库信息和初始化
-	onMounted(async () => {
-		await loadDatabaseInfo();
-
-		// 预加载公网 IP
-		const { publicIp, isLoading, fetchPublicIp } = usePublicIp();
-		if (!isLoading.value && !publicIp.value) {
-			try {
-				await fetchPublicIp();
-			} catch (error) {
-				// 静默处理错误
-			}
-		}
-	});
-
 	interface LocationResult {
 		ip: string
 		location: {
@@ -295,30 +280,6 @@
 		}
 	};
 
-	// 自动检测公网 IP
-	const detectPublicIp = async () => {
-		isDetectingIp.value = true;
-		errorMessage.value = "";
-
-		try {
-			const { publicIp, fetchPublicIp } = usePublicIp();
-			await fetchPublicIp();
-
-			if (publicIp.value) {
-				formState.ipInput = publicIp.value;
-				// 自动查询该 IP 的位置信息
-				await lookupLocation();
-			} else {
-				errorMessage.value = "无法获取公网 IP 地址，请手动输入。";
-			}
-		} catch (error) {
-			console.error("检测公网 IP 失败:", error);
-			errorMessage.value = "检测公网 IP 失败，请手动输入 IP 地址。";
-		} finally {
-			isDetectingIp.value = false;
-		}
-	};
-
 	// 查询 IP 位置
 	const lookupLocation = async () => {
 		isLookingUp.value = true;
@@ -342,6 +303,30 @@
 			errorMessage.value = error instanceof Error ? error.message : "查询失败，请检查 IP 地址格式和数据库状态。";
 		} finally {
 			isLookingUp.value = false;
+		}
+	};
+
+	// 自动检测公网 IP
+	const detectPublicIp = async () => {
+		isDetectingIp.value = true;
+		errorMessage.value = "";
+
+		try {
+			const { publicIp, fetchPublicIp } = usePublicIp();
+			await fetchPublicIp();
+
+			if (publicIp.value) {
+				formState.ipInput = publicIp.value;
+				// 自动查询该 IP 的位置信息
+				await lookupLocation();
+			} else {
+				errorMessage.value = "无法获取公网 IP 地址，请手动输入。";
+			}
+		} catch (error) {
+			console.error("检测公网 IP 失败:", error);
+			errorMessage.value = "检测公网 IP 失败，请手动输入 IP 地址。";
+		} finally {
+			isDetectingIp.value = false;
 		}
 	};
 
@@ -377,4 +362,19 @@
 		const parts = trimmed.split(":").filter((part) => part.length > 0);
 		return parts.length <= 8;
 	}
+
+	// 页面加载时获取数据库信息和初始化
+	onMounted(async () => {
+		await loadDatabaseInfo();
+
+		// 预加载公网 IP
+		const { publicIp, isLoading, fetchPublicIp } = usePublicIp();
+		if (!isLoading.value && !publicIp.value) {
+			try {
+				await fetchPublicIp();
+			} catch {
+				// 静默处理错误
+			}
+		}
+	});
 </script>

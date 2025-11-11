@@ -271,11 +271,7 @@ fn calculate_non_precise_summary(merged_ranges: &[Range]) -> NonPreciseSummary {
     }
 
     // 计算额外地址数和百分比
-    let extra_addresses = if input_addresses > total_addresses {
-        0
-    } else {
-        total_addresses - input_addresses
-    };
+	let extra_addresses = total_addresses.saturating_sub(input_addresses);
     let extra_percentage = if total_addresses > 0 {
         (extra_addresses as f64 / total_addresses as f64) * 100.0
     } else {

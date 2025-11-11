@@ -1,4 +1,3 @@
-use reqwest;
 use serde::Serialize;
 use serde_json::Value;
 

@@ -66,30 +66,6 @@
 		category: "tools"
 	});
 
-	// 页面加载时自动检测公网 IP
-	onMounted(async () => {
-		const { publicIp, isLoading, fetchPublicIp } = usePublicIp();
-
-		// 如果已经有缓存的数据，直接使用
-		if (publicIp.value && !isLoading.value) {
-			formState.cidrInput = `${publicIp.value}/24`;
-			await calculate();
-		} else {
-			// 没有缓存数据，请求获取
-			try {
-				await fetchPublicIp();
-				if (publicIp.value) {
-					formState.cidrInput = `${publicIp.value}/24`;
-					await calculate();
-				}
-			} catch (error) {
-				// 检测失败，使用默认值
-				formState.cidrInput = "192.168.1.1/24";
-				errorMessage.value = "自动检测公网 IP 失败，请手动输入 IPv4/CIDR 地址。";
-			}
-		}
-	});
-
 	interface SummaryRow {
 		label: string
 		value: string
@@ -228,32 +204,6 @@
 		return `共 ${rows} 个 /${cidr} 子网，覆盖范围 ${scope}`;
 	});
 
-	const detectPublicIp = async () => {
-		isDetectingIp.value = true;
-		errorMessage.value = "";
-
-		try {
-			const { fetchPublicIp, getPublicIpCidr } = usePublicIp();
-
-			// 强制重新获取（忽略缓存）
-			await fetchPublicIp();
-
-			const suggestedCidr = getPublicIpCidr(24);
-			formState.cidrInput = suggestedCidr;
-
-			// 自动触发计算
-			await calculate();
-		} catch (error) {
-			const errorMsg = typeof error === "string"
-				? error
-				: (error as Error)?.message || "检测公网 IP 失败";
-
-			errorMessage.value = `自动检测公网 IP 失败: ${errorMsg}。请手动输入 IPv4/CIDR 地址。`;
-		} finally {
-			isDetectingIp.value = false;
-		}
-	};
-
 	const calculate = async () => {
 		isCalculating.value = true;
 		errorMessage.value = "";
@@ -280,9 +230,31 @@
 		}
 	};
 
-	onMounted(() => {
-		void calculate();
-	});
+	const detectPublicIp = async () => {
+		isDetectingIp.value = true;
+		errorMessage.value = "";
+
+		try {
+			const { fetchPublicIp, getPublicIpCidr } = usePublicIp();
+
+			// 强制重新获取（忽略缓存）
+			await fetchPublicIp();
+
+			const suggestedCidr = getPublicIpCidr(24);
+			formState.cidrInput = suggestedCidr;
+
+			// 自动触发计算
+			await calculate();
+		} catch (error) {
+			const errorMsg = typeof error === "string"
+				? error
+				: (error as Error)?.message || "检测公网 IP 失败";
+
+			errorMessage.value = `自动检测公网 IP 失败: ${errorMsg}。请手动输入 IPv4/CIDR 地址。`;
+		} finally {
+			isDetectingIp.value = false;
+		}
+	};
 
 	function isValidIpv4Cidr(value: string) {
 		const normalized = value.replace(/\s+/g, "");
@@ -317,6 +289,34 @@
 	function intToIpv4(intValue: number) {
 		return [24, 16, 8, 0].map((shift) => ((intValue >>> shift) & 0xFF).toString()).join(".");
 	}
+
+	// 页面加载时自动检测公网 IP
+	onMounted(async () => {
+		const { publicIp, isLoading, fetchPublicIp } = usePublicIp();
+
+		// 如果已经有缓存的数据，直接使用
+		if (publicIp.value && !isLoading.value) {
+			formState.cidrInput = `${publicIp.value}/24`;
+			await calculate();
+			return;
+		}
+
+		try {
+			await fetchPublicIp();
+			if (publicIp.value) {
+				formState.cidrInput = `${publicIp.value}/24`;
+				await calculate();
+				return;
+			}
+		} catch {
+			// 忽略具体异常，由下方默认逻辑兜底
+		}
+
+		// 检测失败或无缓存，使用默认值
+		formState.cidrInput = "192.168.1.1/24";
+		errorMessage.value = "自动检测公网 IP 失败，请手动输入 IPv4/CIDR 地址。";
+		await calculate();
+	});
 
 	function buildNetworkRow(networkInt: number, step: number, cidr: number): NetworkRow {
 		const broadcastInt = toUint32(networkInt + step - 1);

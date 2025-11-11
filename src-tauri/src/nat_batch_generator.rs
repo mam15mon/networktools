@@ -684,30 +684,20 @@ pub fn convert_excel_to_entries(request: ConvertInputRequest) -> Result<ConvertR
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceType {
-    Huawei,
-    H3c,
+	#[default]
+	Huawei,
+	H3c,
 }
 
-impl Default for DeviceType {
-    fn default() -> Self {
-        DeviceType::Huawei
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum IspSource {
-    Local,
-    Online,
-}
-
-impl Default for IspSource {
-    fn default() -> Self {
-        IspSource::Local
-    }
+	#[default]
+	Local,
+	Online,
 }
 
 #[derive(Serialize, Deserialize)]
