@@ -289,14 +289,14 @@ fn derive_type(ip_int: u32, ip_class: &str) -> String {
     let first = (ip_int >> 24) as u8;
     let second = ((ip_int >> 16) & 0xff) as u8;
 
-	let is_private = first == 10
-		|| (first == 172 && (16..=31).contains(&second))
-		|| (first == 192 && second == 168);
+    let is_private = first == 10
+        || (first == 172 && (16..=31).contains(&second))
+        || (first == 192 && second == 168);
 
-	if is_private {
-		"Private".into()
-	} else if first == 169 && second == 254 {
-		"Link-local".into()
+    if is_private {
+        "Private".into()
+    } else if first == 169 && second == 254 {
+        "Link-local".into()
     } else if first == 127 {
         "Loopback".into()
     } else if first == 100 && (64..=127).contains(&second) {

@@ -593,11 +593,11 @@ fn record_filter_metadata(expr: &ast::Expr, scope: &Scope, result: &mut Analysis
         return;
     }
     for filter in &expr.filters {
-		result
-			.filter_usage
-			.entry(ident.clone())
-			.or_default()
-			.insert(filter.name.clone());
+        result
+            .filter_usage
+            .entry(ident.clone())
+            .or_default()
+            .insert(filter.name.clone());
         if filter.name == "default" {
             if let Some(description) = describe_default_filter(filter) {
                 result.default_fallbacks.insert(ident.clone(), description);
@@ -656,19 +656,15 @@ fn record_identifier(ident: &str, scope: &Scope, result: &mut AnalysisResult) {
 }
 
 fn record_sample(ident: &str, value: String, result: &mut AnalysisResult) {
-	result
-		.sample_values
-		.entry(ident.to_string())
-		.or_default()
-		.insert(value);
+    result
+        .sample_values
+        .entry(ident.to_string())
+        .or_default()
+        .insert(value);
 }
 
 fn extract_ident_root(ident: &str) -> String {
-	ident
-		.split(['.', '['])
-		.next()
-		.unwrap_or(ident)
-		.to_string()
+    ident.split(['.', '[']).next().unwrap_or(ident).to_string()
 }
 
 fn extract_full_ident(expr: &ast::Expr) -> Option<String> {
@@ -842,9 +838,9 @@ fn is_pure_formatting(name: &str, filter_usage: &HashMap<String, Vec<String>>) -
     if filters.is_empty() {
         return false;
     }
-	filters
-		.iter()
-		.all(|filter| FORMATTING_FILTERS.contains(&filter.as_str()))
+    filters
+        .iter()
+        .all(|filter| FORMATTING_FILTERS.contains(&filter.as_str()))
 }
 
 fn build_colored_format(base: &Format, classification: &ColumnClassification) -> Format {
@@ -961,10 +957,10 @@ fn collect_preview_rows(
         if preview_rows.len() < MAX_PREVIEW_ROWS {
             let mut formatted_row = Vec::with_capacity(column_count);
             for col_idx in 0..column_count {
-		let value = row
-			.get(col_idx)
-			.map(data_type_to_string)
-			.unwrap_or_default();
+                let value = row
+                    .get(col_idx)
+                    .map(data_type_to_string)
+                    .unwrap_or_default();
                 if !value.is_empty() {
                     if let Some(count) = column_non_empty_counts.get_mut(col_idx) {
                         *count += 1;
@@ -1067,15 +1063,15 @@ fn data_to_value(value: &Data) -> Value {
 }
 
 fn float_to_number(value: f64) -> Value {
-	if value.is_finite() {
-		let truncated = value.trunc();
-		if (value - truncated).abs() < f64::EPSILON
-			&& truncated >= i64::MIN as f64
-			&& truncated <= i64::MAX as f64
-		{
-			return Value::Number((truncated as i64).into());
-		}
-	}
+    if value.is_finite() {
+        let truncated = value.trunc();
+        if (value - truncated).abs() < f64::EPSILON
+            && truncated >= i64::MIN as f64
+            && truncated <= i64::MAX as f64
+        {
+            return Value::Number((truncated as i64).into());
+        }
+    }
     Number::from_f64(value)
         .map(Value::Number)
         .unwrap_or(Value::Null)
@@ -1123,13 +1119,13 @@ fn parse_path_segments(path: &str) -> Vec<PathSegment> {
                     segments.push(PathSegment::Key(current.clone()));
                     current.clear();
                 }
-			let mut content = String::new();
-			for next in chars.by_ref() {
-				if next == ']' {
-					break;
-				}
-				content.push(next);
-			}
+                let mut content = String::new();
+                for next in chars.by_ref() {
+                    if next == ']' {
+                        break;
+                    }
+                    content.push(next);
+                }
                 let content = content.trim();
                 if content.starts_with('"') || content.starts_with('\'') {
                     let trimmed = content.trim_matches('"').trim_matches('\'');
@@ -1338,7 +1334,7 @@ fn extract_line_column(raw: &str) -> Option<(usize, usize)> {
             let line_num = line_part.trim().parse().ok()?;
             let column_part = tail
                 .trim()
-				.split(['|', ' '])
+                .split(['|', ' '])
                 .find(|chunk| !chunk.is_empty())?;
             let column_num = column_part.trim().parse().ok()?;
             return Some((line_num, column_num));

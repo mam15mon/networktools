@@ -322,21 +322,21 @@ pub fn bulk_add_elastic_ip_mappings(
             }
         };
 
-		match mapping.entry(internal_ip) {
-			Entry::Occupied(mut entry) => {
-				if request.overwrite_existing {
-					entry.insert(elastic_ip);
-					updated += 1;
-				} else {
-					skipped += 1;
-				}
-			}
-			Entry::Vacant(entry) => {
-				entry.insert(elastic_ip);
-				added += 1;
-			}
-		}
-	}
+        match mapping.entry(internal_ip) {
+            Entry::Occupied(mut entry) => {
+                if request.overwrite_existing {
+                    entry.insert(elastic_ip);
+                    updated += 1;
+                } else {
+                    skipped += 1;
+                }
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(elastic_ip);
+                added += 1;
+            }
+        }
+    }
 
     save_elastic_ip_mapping_internal(&mapping)?;
 

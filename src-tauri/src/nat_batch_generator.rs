@@ -687,17 +687,17 @@ pub fn convert_excel_to_entries(request: ConvertInputRequest) -> Result<ConvertR
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceType {
-	#[default]
-	Huawei,
-	H3c,
+    #[default]
+    Huawei,
+    H3c,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum IspSource {
-	#[default]
-	Local,
-	Online,
+    #[default]
+    Local,
+    Online,
 }
 
 #[derive(Serialize, Deserialize)]
