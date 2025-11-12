@@ -23,11 +23,7 @@
 							</div>
 						</div>
 					</template>
-					<div
-						class="relative"
-						@dragover.prevent
-						@drop.prevent="handleDrop($event, 'left')"
-					>
+					<div class="relative" @dragover.prevent @drop.prevent="handleDrop($event, 'left')">
 						<UTextarea
 							v-model="leftText"
 							:rows="14"
@@ -61,11 +57,7 @@
 							</div>
 						</div>
 					</template>
-					<div
-						class="relative"
-						@dragover.prevent
-						@drop.prevent="handleDrop($event, 'right')"
-					>
+					<div class="relative" @dragover.prevent @drop.prevent="handleDrop($event, 'right')">
 						<UTextarea
 							v-model="rightText"
 							:rows="14"
@@ -79,30 +71,19 @@
 				</UCard>
 			</div>
 
-			<div class="flex flex-wrap gap-3">
-				<UButton
-					icon="i-lucide-scan-line"
-					:loading="isComparing"
-					@click="generateDiff"
-				>
+			<div class="flex flex-wrap items-center gap-3">
+				<UButton icon="i-lucide-scan-line" :loading="isComparing" @click="generateDiff">
 					生成对比
 				</UButton>
-				<UButton
-					variant="outline"
-					icon="i-lucide-file-down"
-					:disabled="!diffText"
-					@click="downloadTextDiff"
-				>
+				<UButton variant="outline" icon="i-lucide-file-down" :disabled="!diffText" @click="downloadTextDiff">
 					导出文本 diff
 				</UButton>
-				<UButton
-					variant="outline"
-					icon="i-lucide-file-type"
-					:disabled="!diffHtml"
-					@click="downloadHtmlDiff"
-				>
+				<UButton variant="outline" icon="i-lucide-file-type" :disabled="!diffHtml" @click="downloadHtmlDiff">
 					导出 HTML 对比
 				</UButton>
+				<p class="text-xs text-(--ui-text-muted)">
+					默认展示每处变更 ± {{ CONTEXT_RADIUS }} 行上下文。
+				</p>
 			</div>
 
 			<UAlert v-if="!diffHtml" color="neutral" variant="subtle">
@@ -114,8 +95,28 @@
 				</template>
 			</UAlert>
 
-			<div v-if="diffHtml" class="overflow-auto border border-(--ui-border) rounded-lg">
-				<div class="diff2html" v-html="diffHtml" />
+			<div v-else class="space-y-4">
+				<div class="grid gap-4 sm:grid-cols-2">
+					<UCard>
+						<p class="text-xs text-(--ui-text-muted)">
+							文本行数
+						</p>
+						<p class="text-lg font-semibold">
+							{{ diffSummary?.left_lines }} / {{ diffSummary?.right_lines }}
+						</p>
+					</UCard>
+					<UCard>
+						<p class="text-xs text-(--ui-text-muted)">
+							删 / 增 / 相同行
+						</p>
+						<p class="text-lg font-semibold">
+							{{ diffSummary?.deletions }} / {{ diffSummary?.insertions }} / {{ diffSummary?.equal }}
+						</p>
+					</UCard>
+				</div>
+				<div class="overflow-auto border border-(--ui-border) rounded-lg">
+					<div class="diff2html" v-html="diffHtml" />
+				</div>
 			</div>
 		</div>
 		<input ref="leftFileInput" type="file" class="hidden" @change="handleFileSelect($event, 'left')">
@@ -124,8 +125,8 @@
 </template>
 
 <script setup lang="ts">
-	import { createTwoFilesPatch } from "diff";
 	import { Diff2Html } from "diff2html";
+	import diff2htmlStyles from "diff2html/bundles/css/diff2html.min.css?raw";
 	import { ref } from "vue";
 	import LayoutTile from "~/components/Layout/Tile.vue";
 	import "diff2html/bundles/css/diff2html.min.css";
@@ -136,10 +137,20 @@
 	const rightMeta = ref("");
 	const diffHtml = ref("");
 	const diffText = ref("");
+	const diffSummary = ref<TextDiffSummary | null>(null);
 	const isComparing = ref(false);
-	const toast = useToast();
 	const leftFileInput = ref<HTMLInputElement>();
 	const rightFileInput = ref<HTMLInputElement>();
+	const toast = useToast();
+	const CONTEXT_RADIUS = 500;
+
+	interface TextDiffSummary {
+		left_lines: number
+		right_lines: number
+		insertions: number
+		deletions: number
+		equal: number
+	}
 
 	function triggerFile(side: "left" | "right") {
 		(side === "left" ? leftFileInput.value : rightFileInput.value)?.click();
@@ -155,6 +166,7 @@
 		}
 		diffHtml.value = "";
 		diffText.value = "";
+		diffSummary.value = null;
 	}
 
 	async function handleFileSelect(event: Event, side: "left" | "right") {
@@ -189,30 +201,36 @@
 		}
 	}
 
-	function generateDiff() {
+	async function generateDiff() {
 		if (!leftText.value && !rightText.value) {
 			toast.add({ title: "请输入内容", description: "至少提供一份文本", color: "warning" });
 			return;
 		}
 		isComparing.value = true;
 		try {
-			const patch = createTwoFilesPatch(
-				leftMeta.value || "文本A",
-				rightMeta.value || "文本B",
-				leftText.value,
-				rightText.value,
-				"",
-				"",
+			const response = await useTauriCoreInvoke<{ patch: string, summary: TextDiffSummary }>(
+				"generate_text_diff",
 				{
-					context: 3
+					left: leftText.value,
+					right: rightText.value,
+					leftName: leftMeta.value || "文本A",
+					rightName: rightMeta.value || "文本B",
+					context: CONTEXT_RADIUS
 				}
 			);
-			diffText.value = patch;
-			diffHtml.value = Diff2Html.html(patch, {
+			diffText.value = response.patch;
+			diffSummary.value = response.summary;
+			diffHtml.value = Diff2Html.html(response.patch, {
 				drawFileList: false,
 				matching: "lines",
 				outputFormat: "side-by-side",
 				diffStyle: "word"
+			});
+		} catch (error) {
+			toast.add({
+				title: "对比失败",
+				description: error instanceof Error ? error.message : String(error),
+				color: "error"
 			});
 		} finally {
 			isComparing.value = false;
@@ -226,7 +244,7 @@
 
 	function downloadHtmlDiff() {
 		if (!diffHtml.value) return;
-		const html = `<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8" /><title>文本对比</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" /></head><body><div class="diff2html">${diffHtml.value}</div></body></html>`;
+		const html = `<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8" /><title>文本对比</title><style>${diff2htmlStyles}</style></head><body><div class="diff2html">${diffHtml.value}</div></body></html>`;
 		downloadBlob(html, "text-diff.html", "text/html;charset=utf-8");
 	}
 
