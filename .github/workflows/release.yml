@@ -47,7 +47,7 @@ jobs:
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.2.19
+          bun-version: "latest"
 
       - name: install frontend dependencies
         run: bun install
