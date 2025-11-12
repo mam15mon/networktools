@@ -3,7 +3,7 @@
 		title="模板批量配置生成"
 		description="基于 Tera 模板引擎，从 Excel 数据批量生成配置文件，支持复杂变量映射和条件渲染。"
 	>
-		<div class="space-y-8">
+		<div class="space-y-8 w-full max-w-screen-2xl mx-auto">
 			<!-- 模板文件选择 -->
 			<UCard class="bg-(--ui-bg)">
 				<template #header>
@@ -49,7 +49,7 @@
 					</div>
 
 					<div v-if="templateState.analysis" class="space-y-4">
-						<div class="grid gap-4 md:grid-cols-4">
+						<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 							<div class="p-3 bg-(--ui-bg-muted) rounded-lg">
 								<div class="flex items-center gap-2 mb-1">
 									<Icon name="i-lucide-variable" class="size-4 text-(--ui-text-muted)" />
@@ -201,7 +201,7 @@
 					</div>
 
 					<div v-if="excelState.preview" class="space-y-4">
-						<div class="grid gap-4 md:grid-cols-[220px_1fr] items-center">
+						<div class="grid gap-4 md:grid-cols-[minmax(220px,260px)_1fr] items-center">
 							<label class="text-sm font-medium text-(--ui-text-muted)">
 								工作表
 							</label>

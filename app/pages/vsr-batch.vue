@@ -3,7 +3,7 @@
 		title="VSR 批量配置生成"
 		description="基于 Excel 模板批量生成 VSR 配置脚本，支持本地、LDAP、Radius 可选段落。"
 	>
-		<div class="space-y-8">
+		<div class="space-y-8 w-full max-w-screen-2xl mx-auto">
 			<UCard class="bg-(--ui-bg)">
 				<template #header>
 					<div class="flex items-center gap-2">
