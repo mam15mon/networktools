@@ -645,13 +645,15 @@
 		const availableColumns = excelState.preview.columns;
 		const columnsWithData = excelState.preview.columnsWithData || [];
 		const invalidIterableColumns = excelState.preview.invalidIterableColumns || [];
+		const defaultableSet = new Set(Object.keys(templateState.analysis.defaultFallbacks ?? {}));
 
 		const missingVariables = requiredVariables.filter(
 			(variable) => !availableColumns.includes(variable)
 		);
 		const emptyVariables = requiredVariables
 			.filter((variable) => availableColumns.includes(variable))
-			.filter((variable) => !columnsWithData.includes(variable));
+			.filter((variable) => !columnsWithData.includes(variable))
+			.filter((variable) => !defaultableSet.has(variable));
 		const invalidIterableVariables = templateState.analysis.iterableVariables
 			.filter((variable) => availableColumns.includes(variable))
 			.filter((variable) => invalidIterableColumns.includes(variable));
