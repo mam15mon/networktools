@@ -6,6 +6,7 @@ export interface TeraTemplateAnalysis {
 	loopCount: number
 	conditionalCount: number
 	iterableVariables: string[]
+	iterableFields: Record<string, string[]>
 	sampleValues: Record<string, string[]>
 	defaultFallbacks: Record<string, string>
 	filterUsage: Record<string, string[]>

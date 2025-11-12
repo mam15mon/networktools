@@ -68,18 +68,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          bun-version: "latest"
+          cache: "bun"
 
       - name: Install dependencies
         run: bun install
@@ -103,21 +96,14 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: "latest"
+          cache: "bun"
 
       - name: Install system dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-22.04'
