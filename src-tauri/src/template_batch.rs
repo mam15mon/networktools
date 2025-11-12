@@ -1079,8 +1079,9 @@ fn float_to_number(value: f64) -> Value {
 
 fn iterable_value_is_valid(value: &Value) -> bool {
     match value {
-        Value::Array(items) => items.iter().all(|item| item.is_object()),
+        Value::Array(items) => items.iter().all(|item| !item.is_array()),
         Value::Object(_) => true,
+        Value::Bool(_) | Value::Number(_) | Value::String(_) => true,
         _ => false,
     }
 }

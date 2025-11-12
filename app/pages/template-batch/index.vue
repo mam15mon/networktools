@@ -274,13 +274,13 @@
 							</div>
 
 							<div v-if="columnValidationStatus.invalidIterableVariables.length" class="space-y-2">
-								<p class="text-sm text-amber-600">
-									以下列必须填写“由 JSON 对象组成的数组”或“单个 JSON 对象”（示例：
-									<code class="px-1 py-0.5 rounded bg-(--ui-bg-muted)">
-										[{"id":1,"name":"Core","ip":"10.0.0.1","mask":"255.255.255.0"}]
-									</code>
-									），且数组元素不得再是数组，请检查填充内容：
-								</p>
+				<p class="text-sm text-amber-600">
+					以下列必须填写“由 JSON 对象组成的数组”、“单个 JSON 对象”或“简单值数组”（示例：
+					<code class="px-1 py-0.5 rounded bg-(--ui-bg-muted)">
+						[{"id":1,"name":"Core"}] / {"id":1} / ["vlan10","vlan20"]
+					</code>
+					），且数组元素不得再是数组，请检查填充内容：
+				</p>
 								<div class="flex flex-wrap gap-2">
 									<UBadge
 										v-for="variable in columnValidationStatus.invalidIterableVariables"
