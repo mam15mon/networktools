@@ -636,6 +636,13 @@
 		});
 	});
 
+	const conditionalVariableSet = computed(() => {
+		const map = templateState.analysis?.sampleValues;
+		if (!map) return new Set<string>();
+		const entries = Object.entries(map).filter(([, values]) => values && values.length > 0);
+		return new Set(entries.map(([key]) => key));
+	});
+
 	const columnValidationStatus = computed(() => {
 		if (!templateState.analysis || !excelState.preview) {
 			return { isValid: false, missingVariables: [], emptyVariables: [], invalidIterableVariables: [] };
@@ -653,7 +660,8 @@
 		const emptyVariables = requiredVariables
 			.filter((variable) => availableColumns.includes(variable))
 			.filter((variable) => !columnsWithData.includes(variable))
-			.filter((variable) => !defaultableSet.has(variable));
+			.filter((variable) => !defaultableSet.has(variable))
+			.filter((variable) => !conditionalVariableSet.value.has(variable));
 		const invalidIterableVariables = templateState.analysis.iterableVariables
 			.filter((variable) => availableColumns.includes(variable))
 			.filter((variable) => invalidIterableColumns.includes(variable));
@@ -677,13 +685,6 @@
 
 	const iterableVariableSet = computed(() => {
 		return new Set(templateState.analysis?.iterableVariables ?? []);
-	});
-
-	const conditionalVariableSet = computed(() => {
-		const map = templateState.analysis?.sampleValues;
-		if (!map) return new Set<string>();
-		const entries = Object.entries(map).filter(([, values]) => values && values.length > 0);
-		return new Set(entries.map(([key]) => key));
 	});
 
 	const variableInsights = computed(() => {
