@@ -313,116 +313,21 @@
 				</div>
 			</UCard>
 
-			<!-- 配置生成 -->
-			<UCard v-if="canGenerateConfigs" class="bg-(--ui-bg)">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<Icon name="i-lucide-cpu" class="size-5" />
-						<h3 class="text-lg font-semibold">
-							配置生成
-						</h3>
-					</div>
-				</template>
-				<div class="space-y-4">
-					<div class="flex flex-wrap items-center gap-3">
-						<UButton
-							:loading="generationLoading"
-							icon="i-lucide-play"
-							@click="generateConfigs"
-						>
-							生成配置
-						</UButton>
-						<UButton
-							variant="outline"
-							icon="i-lucide-refresh-cw"
-							:disabled="!generatedConfigs.length"
-							@click="regenerateConfigs"
-						>
-							重新生成
-						</UButton>
-						<UButton
-							variant="outline"
-							icon="i-lucide-file-spreadsheet"
-							:disabled="!generatedConfigs.length"
-							@click="exportToExcel"
-						>
-							导出Excel
-						</UButton>
-					</div>
-
-					<div v-if="generationErrors.length" class="space-y-2">
-						<UAlert variant="error" icon="i-lucide-alert-triangle" title="生成错误">
-							<ul class="list-disc pl-5 space-y-1">
-								<li v-for="(error, index) in generationErrors" :key="`error-${index}`">
-									{{ error }}
-								</li>
-							</ul>
-						</UAlert>
-					</div>
-
-					<div v-if="generatedConfigs.length" class="space-y-4">
-						<div class="flex items-center justify-between">
-							<h4 class="text-base font-semibold">
-								生成结果（{{ generatedConfigs.length }} 个配置）
-							</h4>
-							<div class="flex items-center gap-2">
-								<UButton
-									variant="outline"
-									size="sm"
-									icon="i-lucide-chevron-down"
-									@click="showAllConfigs = !showAllConfigs"
-								>
-									{{ showAllConfigs ? '收起' : '展开' }}全部
-								</UButton>
-							</div>
-						</div>
-
-						<div class="space-y-3">
-							<div
-								v-for="(config, index) in displayConfigs"
-								:key="config.rowIndex"
-								class="border border-(--ui-border) rounded-lg overflow-hidden"
-							>
-								<div
-									class="p-3 bg-(--ui-bg-muted) cursor-pointer flex items-center justify-between"
-									@click="toggleConfigExpansion(index)"
-								>
-									<div class="flex items-center gap-3">
-										<Icon
-											:name="expandedConfigs[index] ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-											class="size-4 transition-transform"
-										/>
-										<span class="font-medium">{{ config.label }}</span>
-										<UBadge variant="outline" size="sm">
-											第 {{ config.rowIndex }} 行
-										</UBadge>
-									</div>
-									<div class="flex items-center gap-2">
-										<UButton
-											variant="ghost"
-											size="xs"
-											icon="i-lucide-copy"
-											@click.stop="copyConfig(config.config)"
-										/>
-									</div>
-								</div>
-								<div v-if="expandedConfigs[index]" class="p-4 border-t border-(--ui-border)">
-									<pre class="text-sm font-mono whitespace-pre-wrap bg-(--ui-bg) p-3 rounded border border-(--ui-border)">{{ config.config }}</pre>
-								</div>
-							</div>
-						</div>
-
-						<div v-if="generatedConfigs.length > displayConfigs.length" class="text-center">
-							<UButton
-								variant="outline"
-								@click="showAllConfigs = true"
-							>
-								显示剩余 {{ generatedConfigs.length - displayConfigs.length }} 个配置
-							</UButton>
-						</div>
-					</div>
-				</div>
-			</UCard>
+			<GenerationActions
+				v-if="canGenerateConfigs"
+				:generation-loading="generationLoading"
+				:generation-errors="generationErrors"
+				:generated-configs="generatedConfigs"
+				:display-configs="displayConfigs"
+				:expanded-configs="expandedConfigs"
+				:show-all-configs="showAllConfigs"
+				@generate="generateConfigs"
+				@regenerate="regenerateConfigs"
+				@export="exportToExcel"
+				@update:show-all-configs="showAllConfigs = $event"
+				@toggle-config="toggleConfigExpansion"
+				@copy-config="copyConfig"
+			/>
 		</div>
 		<UDrawer
 			v-model:open="variableDrawer.open"
@@ -440,7 +345,7 @@
 							变量详情
 						</p>
 					</div>
-					<div v-if="shouldShowSample(activeVariableInsight)">
+					<div v-if="shouldDisplaySample(activeVariableInsight)">
 						<p class="text-sm text-(--ui-text-muted)">
 							模板示例值：
 						</p>
@@ -532,39 +437,10 @@
 </template>
 
 <script lang="ts" setup>
-	import type {
-		GenericGeneratedConfig,
-		TemplateExcelPreview,
-		TeraTemplateAnalysis
-	} from "~/types/template-batch";
-	import { computed, reactive, ref, watch } from "vue";
-	import { extractErrorMessage } from "~/utils/error";
-
-	const FORMATTING_FILTERS = [
-		"upper",
-		"lower",
-		"capitalize",
-		"title",
-		"trim",
-		"trim_end",
-		"trim_start",
-		"slice",
-		"replace",
-		"escape"
-	] as const;
-
-	const FORMATTING_DESCRIPTIONS: Record<string, string> = {
-		upper: "自动转为大写",
-		lower: "自动转为小写",
-		capitalize: "首字母大写",
-		title: "每个单词首字母大写",
-		trim: "移除首尾空格",
-		trim_end: "移除结尾空格",
-		trim_start: "移除开头空格",
-		slice: "截取字符串片段",
-		replace: "替换字符",
-		escape: "自动转义特殊字符"
-	};
+	import { computed, reactive } from "vue";
+	import GenerationActions from "~/components/template-batch/GenerationActions.vue";
+	import { useTemplateBatch, type TemplateVariableInsight } from "~/composables/useTemplateBatch";
+	import { shouldShowSample } from "~/utils/templateHints";
 
 	definePageMeta({
 		name: "模板批量生成",
@@ -573,156 +449,45 @@
 		category: "other"
 	});
 
-	const toast = useToast();
+	const {
+		templateState,
+		excelState,
+		labelField,
+		generationLoading,
+		generationErrors,
+		generatedConfigs,
+		expandedConfigs,
+		showAllConfigs,
+		excelPreviewColumns,
+		excelPreviewRows,
+		columnValidationStatus,
+		defaultFallbackEntries,
+		variableInsights,
+		variableInsightsMap,
+		canGenerateConfigs,
+		displayConfigs,
+		handleSelectTemplate,
+		handleReanalyzeTemplate,
+		handleExportVariableTemplate,
+		handleSelectExcel,
+		handleRepreviewExcel,
+		clearExcelData,
+		generateConfigs,
+		regenerateConfigs,
+		exportToExcel,
+		toggleConfigExpansion,
+		copyConfig,
+		onSheetChange,
+		getLoopCountText,
+		getConditionalCountText,
+		getDefaultFallbackText,
+		formatExampleList
+	} = useTemplateBatch();
 
-	// 模板状态
-	const templateState = reactive({
-		filePath: "",
-		analysis: null as TeraTemplateAnalysis | null,
-		isLoading: false
-	});
-
-	// Excel 状态
-	const excelState = reactive({
-		filePath: "",
-		preview: null as TemplateExcelPreview | null,
-		selectedSheet: "",
-		isLoading: false
-	});
-
-	// 其他状态
-	const labelField = ref("");
-
-	// 当模板分析完成时，自动选择第一个变量作为标识字段
-	watch(
-		() => templateState.analysis?.variables,
-		(variables) => {
-			if (variables && variables.length > 0) {
-				labelField.value = variables[0];
-			}
-		},
-		{ immediate: true }
-	);
-	const generationLoading = ref(false);
-	const generationErrors = ref<string[]>([]);
-	const generatedConfigs = ref<GenericGeneratedConfig[]>([]);
-	const expandedConfigs = ref<Record<number, boolean>>({});
-	const showAllConfigs = ref(false);
 	const variableDrawerDescription = "查看变量的示例值与校验提示";
 	const variableDrawer = reactive({
 		open: false,
 		variable: ""
-	});
-
-	// 计算属性
-	const excelPreviewColumns = computed(() => {
-		if (!excelState.preview) return [];
-		return excelState.preview.columns.map((column, index) => ({
-			id: `col_${index}`,
-			accessorKey: `col_${index}`,
-			header: column || `列 ${index + 1}`
-		}));
-	});
-
-	const excelPreviewRows = computed(() => {
-		if (!excelState.preview) return [];
-		const previewLimit = 10;
-		return excelState.preview.previewRows.slice(0, previewLimit).map((row) => {
-			const rowObj: Record<string, string> = {};
-			row.forEach((cell, index) => {
-				rowObj[`col_${index}`] = cell;
-			});
-			return rowObj;
-		});
-	});
-
-	const conditionalVariableSet = computed(() => {
-		const map = templateState.analysis?.sampleValues;
-		if (!map) return new Set<string>();
-		const entries = Object.entries(map).filter(([, values]) => values && values.length > 0);
-		return new Set(entries.map(([key]) => key));
-	});
-
-	const columnValidationStatus = computed(() => {
-		if (!templateState.analysis || !excelState.preview) {
-			return { isValid: false, missingVariables: [], emptyVariables: [], invalidIterableVariables: [] };
-		}
-
-		const requiredVariables = templateState.analysis.variables;
-		const availableColumns = excelState.preview.columns;
-		const columnsWithData = excelState.preview.columnsWithData || [];
-		const invalidIterableColumns = excelState.preview.invalidIterableColumns || [];
-		const defaultableSet = new Set(Object.keys(templateState.analysis.defaultFallbacks ?? {}));
-
-		const missingVariables = requiredVariables.filter(
-			(variable) => !availableColumns.includes(variable)
-		);
-		const emptyVariables = requiredVariables
-			.filter((variable) => availableColumns.includes(variable))
-			.filter((variable) => !columnsWithData.includes(variable))
-			.filter((variable) => !defaultableSet.has(variable))
-			.filter((variable) => !conditionalVariableSet.value.has(variable));
-		const invalidIterableVariables = templateState.analysis.iterableVariables
-			.filter((variable) => availableColumns.includes(variable))
-			.filter((variable) => invalidIterableColumns.includes(variable));
-
-		return {
-			isValid:
-				missingVariables.length === 0
-				&& emptyVariables.length === 0
-				&& invalidIterableVariables.length === 0,
-			missingVariables,
-			emptyVariables,
-			invalidIterableVariables
-		};
-	});
-
-	const defaultFallbackEntries = computed(() => {
-		const map = templateState.analysis?.defaultFallbacks;
-		if (!map) return [];
-		return Object.entries(map);
-	});
-
-	const fallbackProvidersMap = computed(() => {
-		const raw = templateState.analysis?.defaultFallbacks;
-		const result = new Map<string, string[]>();
-		if (!raw) return result;
-		Object.entries(raw).forEach(([variable, fallback]) => {
-			if (!fallback) return;
-			const list = result.get(fallback) ?? [];
-			list.push(variable);
-			result.set(fallback, list);
-		});
-		return result;
-	});
-
-	const iterableVariableSet = computed(() => {
-		return new Set(templateState.analysis?.iterableVariables ?? []);
-	});
-
-	const variableInsights = computed(() => {
-		if (!templateState.analysis) return [];
-		return templateState.analysis.variables.map((variable) => {
-			const tags = {
-				loop: iterableVariableSet.value.has(variable),
-				conditional: conditionalVariableSet.value.has(variable),
-				defaultable: Boolean(getDefaultFallback(variable)),
-				formatting: isFormattingOnly(variable)
-			};
-			const formattingDescriptions = getFormattingDescriptions(variable);
-			return {
-				name: variable,
-				sample: buildSampleValue(variable, tags),
-				tags,
-				formattingDescriptions,
-				defaultFallback: getDefaultFallback(variable),
-				conditionalValues: templateState.analysis?.sampleValues?.[variable] ?? []
-			};
-		});
-	});
-
-	const variableInsightsMap = computed(() => {
-		return new Map(variableInsights.value.map((insight) => [insight.name, insight]));
 	});
 
 	const activeVariableInsight = computed(() => {
@@ -730,628 +495,21 @@
 		return variableInsightsMap.value.get(variableDrawer.variable) ?? null;
 	});
 
-	const canGenerateConfigs = computed(() => {
-		return templateState.analysis
-			&& excelState.preview
-			&& columnValidationStatus.value.isValid;
-	});
+	const shouldDisplaySample = (insight: TemplateVariableInsight | null) => {
+		if (!insight) return false;
+		return shouldShowSample(insight.name, insight.sample);
+	};
 
-	const displayConfigs = computed(() => {
-		if (showAllConfigs.value) return generatedConfigs.value;
-		return generatedConfigs.value.slice(0, 5);
-	});
+	const setLabelField = (variable: string) => {
+		labelField.value = labelField.value === variable ? "" : variable;
+	};
 
-	// 方法
-	function handleReanalyzeTemplate() {
-		if (templateState.filePath) {
-			analyzeTemplate();
-		}
-	}
-
-	function handleRepreviewExcel() {
-		if (excelState.filePath) {
-			// 重新解析时，使用当前选择的工作表，如果没有则让系统自动选择
-			const sheetToUse = excelState.selectedSheet || undefined;
-			previewExcel(sheetToUse);
-		}
-	}
-
-	function getLoopCountText(): string {
-		if (!templateState.analysis) return "未使用";
-		if (templateState.analysis.hasLoops) {
-			return `${templateState.analysis.loopCount} 个`;
-		}
-		return "未使用";
-	}
-
-	function getConditionalCountText(): string {
-		if (!templateState.analysis) return "未使用";
-		if (templateState.analysis.hasConditionals) {
-			return `${templateState.analysis.conditionalCount} 个`;
-		}
-		return "未使用";
-	}
-
-	function getDefaultFallbackText(): string {
-		const fallbackCount = defaultFallbackEntries.value.length;
-		return fallbackCount > 0 ? `${fallbackCount} 列` : "未使用";
-	}
-
-	function getDefaultFallback(variable: string): string | undefined {
-		return templateState.analysis?.defaultFallbacks?.[variable];
-	}
-
-	function formatExampleList(values: string[]): string {
-		if (!values || !values.length) return "示例缺失";
-		const preview = values.slice(0, 3).join(" / ");
-		return values.length > 3 ? `${preview} / ...` : preview;
-	}
-
-	function isFormattingOnly(variable: string): boolean {
-		const filters = templateState.analysis?.filterUsage?.[variable];
-		if (!filters || !filters.length) return false;
-		return filters.every((filter) => FORMATTING_FILTERS.includes(filter));
-	}
-
-	function getFormattingDescriptions(variable: string): string[] {
-		const filters = templateState.analysis?.filterUsage?.[variable];
-		if (!filters || !filters.length) return [];
-		const unique = Array.from(new Set(filters));
-		return unique
-			.map((filter) => FORMATTING_DESCRIPTIONS[filter] || `自动应用 ${filter} 过滤器`)
-			.filter(Boolean);
-	}
-
-	function buildSampleValue(
-		variable: string,
-		tags: { loop: boolean, conditional: boolean, defaultable: boolean, formatting: boolean }
-	): string {
-		if (tags.loop) {
-			return buildIterableSample(variable);
-		}
-		const values = templateState.analysis?.sampleValues?.[variable] ?? [];
-		const defaultHint = getDefaultFallback(variable);
-		if (defaultHint) {
-			if (values.length) {
-				return `可选：${formatExampleList(values)}；默认 ${defaultHint}`;
-			}
-			return `默认 ${defaultHint}，可留空`;
-		}
-		if (values.length) {
-			return formatExampleList(values);
-		}
-		if (tags.formatting) {
-			return `${variable} 示例值（自动格式化）`;
-		}
-		const providerMessage = getProviderMessage(variable);
-		if (providerMessage) {
-			return providerMessage;
-		}
-		return buildScalarHint(variable);
-	}
-
-	function shouldShowSample(insight: {
-		name: string
-		sample: string
-	}): boolean {
-		if (!insight.sample) return false;
-		const generic = `${insight.name} 示例值`;
-		const formatting = `${insight.name} 示例值（自动格式化）`;
-		return insight.sample !== generic && insight.sample !== formatting;
-	}
-
-	function openVariableDrawer(variable: string) {
+	const openVariableDrawer = (variable: string) => {
 		variableDrawer.variable = variable;
 		variableDrawer.open = true;
-	}
+	};
 
-	function closeVariableDrawer() {
+	const closeVariableDrawer = () => {
 		variableDrawer.open = false;
-	}
-
-	function setLabelField(variable: string) {
-		if (labelField.value === variable) {
-			// 如果点击的是已选中的变量，则取消选择
-			labelField.value = "";
-		} else {
-			// 设置新的标识字段
-			labelField.value = variable;
-		}
-	}
-
-	async function handleSelectTemplate() {
-		try {
-			const { open } = await import("@tauri-apps/plugin-dialog");
-			const selected = await open({
-				multiple: false,
-				filters: [
-					{ name: "模板文件", extensions: ["txt", "template", "tera"] },
-					{ name: "所有文件", extensions: ["*"] }
-				]
-			});
-			if (!selected) return;
-			const path = Array.isArray(selected) ? selected[0] : selected;
-			if (!path) return;
-
-			templateState.filePath = path;
-			await analyzeTemplate();
-		} catch (error) {
-			toast.add({
-				title: "选择模板文件失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function analyzeTemplate() {
-		if (!templateState.filePath) return;
-
-		templateState.isLoading = true;
-		try {
-			const analysis = await useTauriCoreInvoke<TeraTemplateAnalysis>("analyze_tera_template", {
-				request: {
-					filePath: templateState.filePath
-				}
-			});
-
-			templateState.analysis = analysis;
-			toast.add({
-				title: "模板分析成功",
-				description: `检测到 ${analysis.variableCount} 个变量`,
-				color: "success"
-			});
-		} catch (error) {
-			templateState.analysis = null;
-			toast.add({
-				title: "模板分析失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		} finally {
-			templateState.isLoading = false;
-		}
-	}
-
-	async function handleExportVariableTemplate() {
-		if (!templateState.analysis) return;
-
-		try {
-			const { save } = await import("@tauri-apps/plugin-dialog");
-			const path = await save({
-				defaultPath: "模板变量.xlsx",
-				filters: [{ name: "Excel", extensions: ["xlsx"] }]
-			});
-			if (!path) return;
-
-			await useTauriCoreInvoke("export_tera_variable_template", {
-				request: {
-					path,
-					variables: templateState.analysis.variables,
-					iterableVariables: templateState.analysis.iterableVariables,
-					iterableFields: templateState.analysis.iterableFields || {},
-					sampleValues: templateState.analysis.sampleValues || {},
-					defaultFallbacks: templateState.analysis.defaultFallbacks || {},
-					filterUsage: templateState.analysis.filterUsage || {}
-				}
-			});
-
-			toast.add({
-				title: "变量模板导出成功",
-				description: `模板已保存到 ${path}（首行为变量名，第二行为示例，可按需修改）`,
-				color: "success"
-			});
-		} catch (error) {
-			toast.add({
-				title: "导出失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function handleSelectExcel() {
-		try {
-			const { open } = await import("@tauri-apps/plugin-dialog");
-			const selected = await open({
-				multiple: false,
-				filters: [
-					{ name: "Excel", extensions: ["xlsx", "xls"] }
-				]
-			});
-			if (!selected) return;
-			const path = Array.isArray(selected) ? selected[0] : selected;
-			if (!path) return;
-
-			excelState.filePath = path;
-			await previewExcel();
-		} catch (error) {
-			toast.add({
-				title: "选择Excel文件失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function previewExcel(sheetName?: string) {
-		if (!excelState.filePath || !templateState.analysis) return;
-
-		excelState.isLoading = true;
-		try {
-			const preview = await useTauriCoreInvoke<TemplateExcelPreview>("preview_template_excel", {
-				request: {
-					filePath: excelState.filePath,
-					sheetName: sheetName || excelState.selectedSheet || undefined,
-					expectedVariables: templateState.analysis.variables,
-					iterableVariables: templateState.analysis.iterableVariables
-				}
-			});
-
-			excelState.preview = preview;
-			excelState.selectedSheet = preview.selectedSheet;
-
-			toast.add({
-				title: "Excel 预览成功",
-				description: `加载工作表 "${preview.selectedSheet}"，共 ${preview.totalRows} 行数据`,
-				color: "success"
-			});
-		} catch (error) {
-			excelState.preview = null;
-			toast.add({
-				title: "Excel 预览失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		} finally {
-			excelState.isLoading = false;
-		}
-	}
-
-	async function onSheetChange() {
-		if (excelState.selectedSheet) {
-			await previewExcel(excelState.selectedSheet);
-		}
-	}
-
-	function clearExcelData() {
-		excelState.filePath = "";
-		excelState.preview = null;
-		excelState.selectedSheet = "";
-		// 恢复到第一个变量作为标识字段
-		if (templateState.analysis?.variables.length) {
-			labelField.value = templateState.analysis.variables[0];
-		}
-		generationErrors.value = [];
-		generatedConfigs.value = [];
-		expandedConfigs.value = {};
-		showAllConfigs.value = false;
-	}
-
-	async function generateConfigs() {
-		if (!templateState.analysis || !excelState.preview) return;
-
-		generationLoading.value = true;
-		generationErrors.value = [];
-
-		try {
-			const configs = await useTauriCoreInvoke<GenericGeneratedConfig[]>("generate_template_configs", {
-				request: {
-					templatePath: templateState.filePath,
-					excelPath: excelState.filePath,
-					sheetName: excelState.selectedSheet || undefined,
-					expectedVariables: templateState.analysis.variables,
-					labelField: labelField.value || undefined,
-					iterableVariables: templateState.analysis.iterableVariables
-				}
-			});
-
-			generatedConfigs.value = configs;
-			expandedConfigs.value = {};
-
-			toast.add({
-				title: "配置生成成功",
-				description: `共生成 ${configs.length} 个配置`,
-				color: "success"
-			});
-		} catch (error) {
-			generationErrors.value = [extractErrorMessage(error)];
-			toast.add({
-				title: "配置生成失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		} finally {
-			generationLoading.value = false;
-		}
-	}
-
-	async function regenerateConfigs() {
-		await generateConfigs();
-	}
-
-	function toggleConfigExpansion(index: number) {
-		expandedConfigs.value[index] = !expandedConfigs.value[index];
-	}
-
-	async function copyConfig(config: string) {
-		try {
-			await navigator.clipboard.writeText(config);
-			toast.add({
-				title: "复制成功",
-				description: "配置已复制到剪贴板",
-				color: "success"
-			});
-		} catch (error) {
-			toast.add({
-				title: "复制失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	async function exportToExcel() {
-		try {
-			const { save } = await import("@tauri-apps/plugin-dialog");
-			const path = await save({
-				defaultPath: "生成的配置.xlsx",
-				filters: [{ name: "Excel", extensions: ["xlsx"] }]
-			});
-			if (!path) return;
-
-			await useTauriCoreInvoke("export_template_configs", {
-				path,
-				configs: generatedConfigs.value
-			});
-
-			toast.add({
-				title: "导出成功",
-				description: `配置已导出到 ${path}`,
-				color: "success"
-			});
-		} catch (error) {
-			toast.add({
-				title: "导出失败",
-				description: extractErrorMessage(error),
-				color: "error"
-			});
-		}
-	}
-
-	function buildIterableSample(variable: string): string {
-		let childFields = getChildFields(variable);
-		if (!childFields.length) {
-			childFields = inferDefaultChildFields(variable);
-		}
-		if (!childFields.length) {
-			return buildScalarIterableSample(variable);
-		}
-		const sampleCount = 3;
-		const entries: string[] = [];
-		for (let index = 0; index < sampleCount; index += 1) {
-			const fields = childFields.map((field) => {
-				const value = sampleIterableFieldValue(field, variable, index);
-				return `"${field}":"${value}"`;
-			});
-			entries.push(`{${fields.join(",")}}`);
-		}
-		return `[${entries.join(",")}]`;
-	}
-
-	function getChildFields(variable: string): string[] {
-		if (!templateState.analysis) return [];
-		return templateState.analysis.iterableFields?.[variable] ?? [];
-	}
-
-	function inferDefaultChildFields(variable: string): string[] {
-		const lowered = normalizedName(variable).toLowerCase();
-		if (lowered.includes("vlan")) {
-			return ["id"];
-		}
-		if (lowered.endsWith("s")) {
-			return ["id"];
-		}
-		return [];
-	}
-
-	function buildScalarIterableSample(variable: string): string {
-		const numeric = inferNumericExample(variable);
-		if (numeric) {
-			const base = parseInt(numeric, 10);
-			if (!Number.isNaN(base)) {
-				return `["${base}","${base + 1}","${base + 10}"]`;
-			}
-		}
-		return `["${variable}1","${variable}2","${variable}10"]`;
-	}
-
-	function buildScalarHint(variable: string): string {
-		const startEnd = inferRangeHint(variable);
-		if (startEnd) {
-			return startEnd;
-		}
-		const providerMessage = getProviderMessage(variable);
-		if (providerMessage) {
-			return providerMessage;
-		}
-		const numeric = inferNumericExample(variable);
-		if (numeric) {
-			const descriptor = describeNumericVariable(variable);
-			return `${descriptor}（示例 ${numeric}）`;
-		}
-		const ip = inferIpExample(variable);
-		if (ip) {
-			return `${describeIpVariable(variable)}（示例 ${ip}）`;
-		}
-		return `${variable} 示例值`;
-	}
-
-	function inferNumericExample(name: string): string | null {
-		const lowered = normalizedName(name).toLowerCase();
-		if (lowered.includes("vlan")) {
-			if (lowered.includes("start")) return "100";
-			if (lowered.includes("end")) return "200";
-			return "10";
-		}
-		if (lowered.includes("start")) {
-			return "1";
-		}
-		if (lowered.includes("end")) {
-			return "10";
-		}
-		if (lowered.endsWith("_id") || lowered.endsWith("id")) {
-			return "1";
-		}
-		if (lowered.endsWith("_number") || lowered.endsWith("_no")) {
-			return "42";
-		}
-		if (lowered.endsWith("_count") || lowered.endsWith("_size")) {
-			return "2";
-		}
-		if (lowered.includes("port")) {
-			return "48";
-		}
-		if (lowered.includes("slot")) {
-			return "2";
-		}
-		return null;
-	}
-
-	function inferIpExample(name: string): string | null {
-		const lowered = normalizedName(name).toLowerCase();
-		if (lowered.includes("gateway")) {
-			return "10.0.0.1";
-		}
-		if (lowered.includes("loopback")) {
-			return "192.168.255.1";
-		}
-		if (lowered.includes("ip")) {
-			return "10.0.0.1";
-		}
-		if (lowered.includes("mask") || lowered.includes("netmask")) {
-			return "255.255.255.0";
-		}
-		return null;
-	}
-
-	function inferRangeHint(name: string): string | null {
-		const lowered = normalizedName(name).toLowerCase();
-		if (lowered.includes("start") && lowered.includes("vlan")) {
-			return "起始 VLAN ID（示例 100）";
-		}
-		if (lowered.includes("end") && lowered.includes("vlan")) {
-			return "结束 VLAN ID（示例 200）";
-		}
-		if (lowered.includes("start")) {
-			return "起始值（示例 1）";
-		}
-		if (lowered.includes("end")) {
-			return "结束值（示例 10）";
-		}
-		return null;
-	}
-
-	function describeNumericVariable(name: string): string {
-		const lowered = normalizedName(name).toLowerCase();
-		if (lowered.includes("vlan")) {
-			return lowered.includes("range") ? "VLAN 范围" : "VLAN ID";
-		}
-		if (lowered.includes("speed") || lowered.includes("bandwidth")) {
-			return lowered.includes("max") ? "最大端口速率" : "端口速率";
-		}
-		if (lowered.endsWith("id")) {
-			return "标识 ID";
-		}
-		if (lowered.includes("count")) {
-			return "数量";
-		}
-		return "数值";
-	}
-
-	function describeIpVariable(name: string): string {
-		const lowered = normalizedName(name).toLowerCase();
-		if (lowered.includes("gateway")) {
-			return "网关 IP";
-		}
-		if (lowered.includes("loopback")) {
-			return "Loopback IP";
-		}
-		if (lowered.includes("mask") || lowered.includes("netmask")) {
-			return "子网掩码";
-		}
-		return "IP 地址";
-	}
-
-	function sampleValueForField(field: string, parent: string): string {
-		const compound = `${parent}.${field}`;
-		const fromAnalysis = templateState.analysis?.sampleValues?.[compound];
-		if (fromAnalysis && fromAnalysis.length) {
-			return fromAnalysis[0];
-		}
-		const numeric = inferNumericExample(field);
-		if (numeric) return numeric;
-		const ip = inferIpExample(field);
-		if (ip) return ip;
-		const normalizedField = normalizedName(field).toLowerCase();
-		if (normalizedField.includes("name")) {
-			return `${parent}名称`;
-		}
-		if (normalizedField.includes("desc") || normalizedField.includes("remark")) {
-			return "示例描述";
-		}
-		return `${field}示例`;
-	}
-
-	function sampleIterableFieldValue(field: string, parent: string, index: number): string {
-		const compound = `${parent}.${field}`;
-		const fromAnalysis = templateState.analysis?.sampleValues?.[compound];
-		if (fromAnalysis && fromAnalysis.length) {
-			const sample = fromAnalysis[Math.min(index, fromAnalysis.length - 1)];
-			if (sample) return sample;
-		}
-		const numeric = inferNumericExample(field);
-		if (numeric) {
-			const base = Number.parseInt(numeric, 10);
-			if (!Number.isNaN(base)) {
-				const offsets = [0, 1, 9];
-				const offset = offsets[index] ?? index;
-				return String(base + offset);
-			}
-			return numeric;
-		}
-		const ip = inferIpExample(field);
-		if (ip) {
-			return incrementIp(ip, index);
-		}
-		const base = sampleValueForField(field, parent);
-		return index === 0 ? base : `${base}_${index + 1}`;
-	}
-
-	function incrementIp(ip: string, index: number): string {
-		const octets = ip.split(".").map((segment) => Number.parseInt(segment, 10));
-		if (octets.length !== 4 || octets.some((segment) => Number.isNaN(segment))) {
-			return ip;
-		}
-		const result = [...octets];
-		result[3] = Math.max(1, result[3] + index);
-		return result.join(".");
-	}
-
-	function normalizedName(name: string): string {
-		const segments = name.split(".");
-		return segments[segments.length - 1] ?? name;
-	}
-
-	function getProviderMessage(variable: string): string | null {
-		const consumers = fallbackProvidersMap.value.get(variable);
-		if (!consumers || !consumers.length) return null;
-		if (consumers.length === 1) {
-			return `供 ${consumers[0]} 默认引用，请填写实际值`;
-		}
-		const preview = consumers.slice(0, 3).join(" / ");
-		return consumers.length > 3
-			? `供 ${preview} / ... 默认引用，请填写实际值`
-			: `供 ${preview} 默认引用，请填写实际值`;
-	}
+	};
 </script>
