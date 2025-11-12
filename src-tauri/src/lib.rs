@@ -12,7 +12,6 @@ mod isp_manager;
 mod nat_batch_generator;
 mod nat_parser;
 mod template_batch;
-mod text_diff;
 mod vsr_batch;
 
 pub fn run() {
@@ -80,8 +79,7 @@ pub fn run() {
             template_batch::export_tera_variable_template,
             template_batch::preview_template_excel,
             template_batch::generate_template_configs,
-            template_batch::export_template_configs,
-            text_diff::generate_text_diff
+            template_batch::export_template_configs
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
