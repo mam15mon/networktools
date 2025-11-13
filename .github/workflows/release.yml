@@ -44,6 +44,10 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev || sudo apt-get install -y libwebkit2gtk-4.0-dev
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
 
+      - name: install WiX Toolset
+        if: matrix.platform == 'windows-latest'
+        run: choco install wixtoolset --version=3.14.1 -y
+
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -61,4 +65,7 @@ jobs:
           releaseBody: NetworkTools release with cross-platform support
           releaseDraft: false
           prerelease: false
+          releaseArtifacts: |
+            src-tauri/target/release/networktools.exe
+            src-tauri/target/release/bundle/msi/*.msi
           args: ${{ matrix.args }}

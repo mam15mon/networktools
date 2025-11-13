@@ -2,9 +2,9 @@ import { defineConfig } from "bumpp";
 
 export default defineConfig({
 	release: "prompt",
-	commit: false,
-	tag: false,
-	push: false,
+	commit: true,
+	tag: true,
+	push: true,
 	files: [
 		"package.json",
 		"src-tauri/tauri.conf.json",
