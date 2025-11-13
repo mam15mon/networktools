@@ -32,7 +32,7 @@
 		"devUrl": "http://localhost:3000"
 	},
 	"productName": "NetworkTools",
-	"version": "1.5.1",
+	"version": "0.1.0",
 	"identifier": "com.example.networktools",
 	"plugins": {},
 	"app": {

@@ -11,7 +11,7 @@
 <br />
 
 <p float="left">
-	<img src="https://img.shields.io/badge/version-1.5.0-blue" />
+	<img src="https://img.shields.io/badge/version-0.1.0-blue" />
 	<img src="https://img.shields.io/badge/rust-1.70+-orange" />
 	<img src="https://img.shields.io/badge/nuxt-4.0-green" />
 	<img src="https://img.shields.io/badge/license-MIT-purple" />
@@ -46,6 +46,7 @@
 - **桌面应用**: Tauri v2
 - **编程语言**: TypeScript + Rust
 - **代码质量**: ESLint + Prettier
+- **版本管理**: bumpp (自动化版本同步)
 - **自动化**: Tauri函数自动导入
 
 ## 📋 系统要求
@@ -100,7 +101,19 @@ bun run tauri:build
 bun run tauri:build:debug
 ```
 
-构建产物将生成在 `src-tauri/target` 目录中。
+构建产物将生成在 `src-tauri/target` 目录中：
+
+### 构建产物详情
+- **Windows 平台**:
+  - `src-tauri/target/release/networktools.exe` - 单文件可执行程序
+  - `src-tauri/target/release/bundle/msi/*.msi` - Windows Installer 安装包
+- **macOS 平台**:
+  - `src-tauri/target/release/bundle/macos/*.app` - macOS 应用包
+  - `src-tauri/target/release/bundle/dmg/*.dmg` - DMG 镜像文件
+- **Linux 平台**:
+  - `src-tauri/target/release/bundle/deb/*.deb` - Debian 包
+  - `src-tauri/target/release/bundle/rpm/*.rpm` - Red Hat 包
+  - `src-tauri/target/release/bundle/appimage/*.AppImage` - AppImage 便携版
 
 ## 🔄 CI/CD
 
@@ -119,12 +132,54 @@ bun run tauri:build:debug
 
 ### 发布流程
 - 推送标签（如`v1.0.0`）自动触发发布
-- 自动生成各平台安装包
-- GitHub Release自动创建
+- 自动安装 WiX Toolset（Windows）用于生成 MSI 安装包
+- tauri-action 通过 `uploadPlainBinary: true` 配置自动上传：
+  - **Windows**: 单文件 EXE + MSI 安装包
+  - **macOS**: 单文件 APP + DMG 镜像
+  - **Linux**: 单文件二进制 + DEB/RPM 包 + AppImage
+- GitHub Release自动创建，包含所有平台的构建产物和单文件可执行程序
 
 ### 必需的Secrets
 - `TAURI_PRIVATE_KEY` - Tauri签名私钥
 - `TAURI_KEY_PASSWORD` - 私钥密码
+
+## 📋 版本管理
+
+项目使用 [bumpp](https://github.com/antfu/bumpp) 实现自动化版本管理，确保所有配置文件中的版本号保持同步。
+
+### 版本同步机制
+通过 `bump.config.ts` 配置，bumpp 会同时更新以下三个文件：
+- `package.json` - 前端项目版本
+- `src-tauri/Cargo.toml` - Rust 后端版本
+- `src-tauri/tauri.conf.json` - Tauri 应用版本
+
+### 版本管理命令
+```bash
+# 补丁版本升级 (0.1.0 → 0.1.1)
+bun run bump patch
+
+# 次版本升级 (0.1.0 → 0.2.0)
+bun run bump minor
+
+# 主版本升级 (0.1.0 → 1.0.0)
+bun run bump major
+
+# 指定版本
+bun run bump 0.2.5
+
+# 预发布版本
+bun run bump prerelease
+```
+
+### 自动化流程
+配置了 `commit: true, tag: true, push: true`，一次版本升级命令会自动完成：
+1. **版本更新** - 同步更新三个配置文件
+2. **Git 提交** - 创建版本变更提交
+3. **标签创建** - 生成对应的 git tag
+4. **远程推送** - 推送提交和标签到远程仓库
+
+### 发布触发
+推送的标签会自动触发 GitHub Actions 发布工作流，生成多平台安装包并创建 GitHub Release。
 
 ## 🔧 配置说明
 
@@ -252,3 +307,5 @@ A: 需要更新 GeoIP 数据库，或检查网络连接
 <p align="center">
   Made with ❤️ by mam15mon
 </p>
+
+
