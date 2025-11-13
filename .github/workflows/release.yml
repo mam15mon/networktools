@@ -5,28 +5,7 @@ on:
     tags:
       - "v*"
 jobs:
-  create-release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: NetworkTools ${{ github.ref_name }}
-          body: NetworkTools release with cross-platform support
-          draft: false
-          prerelease: false
-
   publish-tauri:
-    needs: create-release
     permissions:
       contents: write
     strategy:
@@ -85,6 +64,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          releaseId: ${{ needs.create-release.outputs.upload_url }}
+          tagName: v__VERSION__
+          releaseName: NetworkTools v__VERSION__
+          releaseBody: NetworkTools release with cross-platform support
+          releaseDraft: false
+          prerelease: false
           uploadPlainBinary: true
           args: ${{ matrix.args }}
